@@ -4,9 +4,9 @@
 #include <BLE2902.h>
 
 // --- Hardware Pin Definitions ---
-const int BUTTON_PIN = 15;
-const int LED_PIN = 4;
-const int BUZZER_PIN = 5;
+const int BUTTON_PIN = 25;  // Moved to safe pin 25
+const int LED_PIN = 14;     // Moved to safe pin 14
+const int BUZZER_PIN = 27;  // Moved to safe pin 27
 
 // --- BLE UUIDs ---
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
@@ -25,10 +25,9 @@ bool isPressing = false;
 const unsigned long SOS_TRIGGER_TIME = 2000;      // 2 seconds to trigger SOS
 const unsigned long DISCONNECT_TRIGGER_TIME = 10000; // 10 seconds to force unpair
 
-// --- Buzzer PWM Settings ---
+// --- Buzzer PWM Settings (Updated for ESP32 Core 3.x) ---
 const int BUZZER_FREQ = 2500; // 2500 Hz gives a sharp, piercing beep
-const int BUZZER_CHANNEL = 0;
-const int BUZZER_RESOLUTION = 8;
+const int BUZZER_RESOLUTION = 8; // 8-bit resolution (0-255)
 
 // --- BLE Server Callbacks ---
 class MyServerCallbacks: public BLEServerCallbacks {
@@ -51,10 +50,9 @@ void setup() {
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, LOW);
 
-  // 2. Initialize PWM for Passive Buzzer
-  ledcSetup(BUZZER_CHANNEL, BUZZER_FREQ, BUZZER_RESOLUTION);
-  ledcAttachPin(BUZZER_PIN, BUZZER_CHANNEL);
-  ledcWrite(BUZZER_CHANNEL, 0); // Start silenced
+  // 2. Initialize PWM for Passive Buzzer (New ESP32 v3.x syntax)
+  ledcAttach(BUZZER_PIN, BUZZER_FREQ, BUZZER_RESOLUTION);
+  ledcWrite(BUZZER_PIN, 0); // Start silenced (0 duty cycle)
 
   // 3. Initialize BLE Environment
   BLEDevice::init("SOS_Keychain");
@@ -125,14 +123,13 @@ void loop() {
       
       sosActive = false;           // Turn off alarms
       digitalWrite(LED_PIN, LOW);
-      ledcWrite(BUZZER_CHANNEL, 0); 
+      ledcWrite(BUZZER_PIN, 0);    // Updated for v3.x
       
       if (deviceConnected) {
          pServer->disconnect(pServer->getConnId());
       }
       
       // Wait in a blocking loop until the user physically lets go of the button
-      // This prevents the device from immediately triggering again.
       Serial.println("STATUS: Please release the button...");
       while(digitalRead(BUTTON_PIN) == LOW) {
         delay(50); 
@@ -151,13 +148,11 @@ void loop() {
     Serial.print(finalHoldDuration);
     Serial.println(" ms");
 
-    // Optional: If you want the SOS to stop when the button is let go, leave this here.
-    // If you want the SOS to keep ringing until the app turns it off, remove this block.
     if (sosActive && finalHoldDuration < DISCONNECT_TRIGGER_TIME) {
       Serial.println("ACTION: Deactivating SOS Alarms.");
       sosActive = false;
       digitalWrite(LED_PIN, LOW);
-      ledcWrite(BUZZER_CHANNEL, 0); 
+      ledcWrite(BUZZER_PIN, 0); // Updated for v3.x
     }
   }
 
@@ -169,10 +164,10 @@ void loop() {
     // Non-blocking toggle every 200ms for a fast, urgent strobe effect
     if ((currentMillis / 200) % 2 == 0) { 
       digitalWrite(LED_PIN, HIGH);
-      ledcWrite(BUZZER_CHANNEL, 128); // 50% duty cycle to generate tone
+      ledcWrite(BUZZER_PIN, 128); // Updated for v3.x: 50% duty cycle to generate tone
     } else {
       digitalWrite(LED_PIN, LOW);
-      ledcWrite(BUZZER_CHANNEL, 0);   // Silence
+      ledcWrite(BUZZER_PIN, 0);   // Updated for v3.x: Silence
     }
   }
 
@@ -182,8 +177,8 @@ void loop() {
   
   // Handling disconnection
   if (!deviceConnected && oldDeviceConnected) {
-      delay(500); // Give the bluetooth stack the chance to get things ready
-      pServer->startAdvertising(); // Restart advertising
+      delay(500); 
+      pServer->startAdvertising(); 
       Serial.println("STATUS: Advertising restarted. Ready for new connection.");
       oldDeviceConnected = deviceConnected;
   }
