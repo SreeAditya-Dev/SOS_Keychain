@@ -4,7 +4,7 @@
 #include <BLE2902.h>
 
 // --- Hardware Pin Definitions ---
-const int BUTTON_PIN = 25;  // Moved to safe pin 25
+const int BUTTON_PIN = 32;  // Moved to safe pin 32
 const int LED_PIN = 14;     // Moved to safe pin 14
 const int BUZZER_PIN = 27;  // Moved to safe pin 27
 
