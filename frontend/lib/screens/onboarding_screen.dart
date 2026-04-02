@@ -64,11 +64,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _showPermissionReminder(List<Permission> missing) async {
     final labels = missing.map(_permissionName).join(', ');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
+          backgroundColor: isDark ? AppTheme.cardDark : AppTheme.cardLight,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
           ),
@@ -77,7 +79,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppTheme.warning.withValues(alpha: 0.2),
+                  color: AppTheme.warning.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -120,19 +122,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               onPressed: () => Navigator.of(dialogContext).pop(),
               child: Text(
                 'Later',
-                style: TextStyle(color: AppTheme.textSecondary),
+                style: TextStyle(
+                  color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
+                ),
               ),
             ),
-            GradientButton(
+            ElevatedButton(
               onPressed: () async {
                 await openAppSettings();
                 if (dialogContext.mounted) {
                   Navigator.of(dialogContext).pop();
                 }
               },
-              text: 'Open Settings',
-              width: 140,
-              height: 44,
+              child: const Text('Open Settings'),
             ),
           ],
         );
@@ -172,7 +174,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
+      backgroundColor: isDark ? AppTheme.backgroundDark : AppTheme.backgroundLight,
       body: SafeArea(
         child: Column(
           children: [
@@ -185,12 +190,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: _currentPage == index ? 32 : 8,
+                    width: _currentPage == index ? 28 : 8,
                     height: 8,
                     decoration: BoxDecoration(
                       color: _currentPage == index
                           ? AppTheme.primaryColor
-                          : AppTheme.primaryColor.withValues(alpha: 0.2),
+                          : (isDark ? AppTheme.borderDark : AppTheme.borderLight),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   );
@@ -206,9 +211,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   setState(() => _currentPage = index);
                 },
                 children: [
-                  _buildWelcomePage(),
-                  _buildFeaturesPage(),
-                  _buildPermissionsPage(),
+                  _buildWelcomePage(isDark),
+                  _buildFeaturesPage(isDark),
+                  _buildPermissionsPage(isDark),
                 ],
               ),
             ),
@@ -231,7 +236,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           },
                           child: Text(
                             'Skip',
-                            style: TextStyle(color: AppTheme.textSecondary),
+                            style: TextStyle(
+                              color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
+                            ),
                           ),
                         ),
                         const Spacer(),
@@ -249,27 +256,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildWelcomePage() {
+  Widget _buildWelcomePage(bool isDark) {
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 160,
-            height: 160,
+            width: 140,
+            height: 140,
             decoration: BoxDecoration(
-              gradient: AppTheme.heroGradient,
+              color: AppTheme.primaryColor,
               shape: BoxShape.circle,
-              boxShadow: AppTheme.softShadow,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.shield_rounded,
-              size: 80,
-              color: Colors.white,
+              size: 70,
+              color: AppTheme.textOnGold,
             ),
           ),
-          const SizedBox(height: 48),
+          const SizedBox(height: 40),
           Text(
             'SafeHer',
             style: Theme.of(context).textTheme.displaySmall?.copyWith(
@@ -277,19 +283,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               color: AppTheme.primaryColor,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Text(
             'Your personal safety companion',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: AppTheme.textSecondary,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 28),
           Text(
             'One press is all it takes to alert your loved ones and send your location in an emergency.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: AppTheme.textSecondary,
+              color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
               height: 1.6,
             ),
           ),
@@ -298,27 +304,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildFeaturesPage() {
+  Widget _buildFeaturesPage(bool isDark) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           Text(
             'How It Works',
-            style: Theme.of(context).textTheme.displaySmall?.copyWith(
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             'Simple, fast, and reliable protection',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: AppTheme.textSecondary,
+              color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
             ),
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 32),
           const FeatureItem(
             icon: Icons.bluetooth_connected_rounded,
             title: 'Connect Your Keychain',
@@ -349,73 +355,78 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildPermissionsPage() {
+  Widget _buildPermissionsPage(bool isDark) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           Text(
             'Permissions Needed',
-            style: Theme.of(context).textTheme.displaySmall?.copyWith(
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             'We need a few permissions to keep you safe',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: AppTheme.textSecondary,
+              color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
             ),
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 32),
           _buildPermissionItem(
             icon: Icons.bluetooth_rounded,
             title: 'Bluetooth',
             description: 'Connect to your SOS keychain device',
             color: AppTheme.info,
+            isDark: isDark,
           ),
           _buildPermissionItem(
             icon: Icons.location_on_rounded,
             title: 'Location',
             description: 'Share your location during emergencies',
             color: AppTheme.success,
+            isDark: isDark,
           ),
           _buildPermissionItem(
             icon: Icons.sms_rounded,
             title: 'SMS',
             description: 'Send emergency text messages',
-            color: AppTheme.secondaryColor,
+            color: AppTheme.primaryColor,
+            isDark: isDark,
           ),
           _buildPermissionItem(
             icon: Icons.notifications_rounded,
             title: 'Notifications',
             description: 'Alert you when SOS is triggered',
             color: AppTheme.warning,
+            isDark: isDark,
           ),
           const SizedBox(height: 24),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppTheme.info.withValues(alpha: 0.1),
+              color: isDark ? AppTheme.subtleGoldDark : AppTheme.subtleGold,
               borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
               border: Border.all(
-                color: AppTheme.info.withValues(alpha: 0.3),
+                color: AppTheme.primaryColor.withValues(alpha: 0.2),
               ),
             ),
             child: Row(
               children: [
                 Icon(
                   Icons.privacy_tip_rounded,
-                  color: AppTheme.info,
+                  color: AppTheme.primaryColor,
+                  size: 20,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     'Your privacy is important. These permissions are only used for emergency alerts.',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppTheme.info,
+                      color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
                     ),
                   ),
                 ),
@@ -432,24 +443,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     required String title,
     required String description,
     required Color color,
+    required bool isDark,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               icon,
               color: color,
-              size: 24,
+              size: 22,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -458,7 +470,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   title,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   description,
                   style: Theme.of(context).textTheme.bodySmall,

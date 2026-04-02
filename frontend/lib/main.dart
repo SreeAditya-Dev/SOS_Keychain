@@ -23,18 +23,66 @@ final _notificationService = NotificationService.instance;
 
 late final GoRouter _router;
 
+/// Global theme notifier for dark mode toggle
+class ThemeNotifier extends ChangeNotifier {
+  ThemeMode _themeMode = ThemeMode.light;
+  
+  ThemeMode get themeMode => _themeMode;
+  bool get isDarkMode => _themeMode == ThemeMode.dark;
+  
+  void setThemeMode(ThemeMode mode) {
+    _themeMode = mode;
+    _updateSystemUI();
+    notifyListeners();
+  }
+  
+  void toggleTheme() {
+    _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    _updateSystemUI();
+    notifyListeners();
+  }
+  
+  void _updateSystemUI() {
+    if (_themeMode == ThemeMode.dark) {
+      SystemChrome.setSystemUIOverlayStyle(
+        const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          systemNavigationBarColor: AppTheme.backgroundDark,
+          systemNavigationBarIconBrightness: Brightness.light,
+        ),
+      );
+    } else {
+      SystemChrome.setSystemUIOverlayStyle(
+        const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+          systemNavigationBarColor: AppTheme.backgroundLight,
+          systemNavigationBarIconBrightness: Brightness.dark,
+        ),
+      );
+    }
+  }
+  
+  Future<void> loadFromStorage() async {
+    final isDark = await _storageService.getSetting<bool>('dark_mode') ?? false;
+    _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+    _updateSystemUI();
+    notifyListeners();
+  }
+  
+  Future<void> saveToStorage() async {
+    await _storageService.saveSetting('dark_mode', isDarkMode);
+  }
+}
+
+final themeNotifier = ThemeNotifier();
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Set system UI overlay style for a cleaner look
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: AppTheme.backgroundLight,
-      systemNavigationBarIconBrightness: Brightness.dark,
-    ),
-  );
+  // Load saved theme preference
+  await themeNotifier.loadFromStorage();
 
   initForegroundTask();
   await _notificationService.initialize(
@@ -76,7 +124,10 @@ GoRouter _buildRouter({required bool onboardingDone}) {
       ),
       GoRoute(
         path: '/settings',
-        builder: (context, state) => SettingsScreen(storageService: _storageService),
+        builder: (context, state) => SettingsScreen(
+          storageService: _storageService,
+          themeNotifier: themeNotifier,
+        ),
       ),
       GoRoute(
         path: '/history',
@@ -178,11 +229,18 @@ class SafeHerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'SafeHer',
-      debugShowCheckedModeBanner: false,
-      routerConfig: _router,
-      theme: AppTheme.lightTheme,
+    return ListenableBuilder(
+      listenable: themeNotifier,
+      builder: (context, child) {
+        return MaterialApp.router(
+          title: 'SafeHer',
+          debugShowCheckedModeBanner: false,
+          routerConfig: _router,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeNotifier.themeMode,
+        );
+      },
     );
   }
 }

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:safeher/constants/app_theme.dart';
+import 'package:safeher/main.dart';
 import 'package:safeher/services/notification_service.dart';
 import 'package:safeher/services/storage_service.dart';
-import 'package:safeher/widgets/custom_widgets.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -10,9 +11,11 @@ class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
     super.key,
     required this.storageService,
+    required this.themeNotifier,
   });
 
   final StorageService storageService;
+  final ThemeNotifier themeNotifier;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -126,6 +129,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _clearAllData() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -162,6 +167,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: () => Navigator.of(ctx).pop(true),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.error,
+              foregroundColor: Colors.white,
             ),
             child: const Text('Clear All'),
           ),
@@ -186,7 +192,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _openPrivacyPolicy() async {
-    // Replace with your actual privacy policy URL
     final uri = Uri.parse('https://safeher.app/privacy');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -194,19 +199,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _openTermsOfService() async {
-    // Replace with your actual terms of service URL
     final uri = Uri.parse('https://safeher.app/terms');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
 
+  void _toggleDarkMode(bool value) {
+    widget.themeNotifier.setThemeMode(value ? ThemeMode.dark : ThemeMode.light);
+    widget.themeNotifier.saveToStorage();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
+      backgroundColor: isDark ? AppTheme.backgroundDark : AppTheme.backgroundLight,
       body: SafeArea(
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? Center(
+                child: CircularProgressIndicator(
+                  color: AppTheme.primaryColor,
+                ),
+              )
             : CustomScrollView(
                 slivers: [
                   // Header
@@ -221,13 +237,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               width: 44,
                               height: 44,
                               decoration: BoxDecoration(
-                                color: AppTheme.surfaceLight,
+                                color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
                                 borderRadius: BorderRadius.circular(12),
-                                boxShadow: AppTheme.cardShadow,
+                                border: Border.all(
+                                  color: isDark ? AppTheme.borderDark : AppTheme.borderLight,
+                                ),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.arrow_back_rounded,
-                                color: AppTheme.textPrimary,
+                                color: isDark ? AppTheme.textPrimaryDark : AppTheme.textPrimary,
                               ),
                             ),
                           ),
@@ -241,9 +259,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
 
+                  // Appearance Section
+                  SliverToBoxAdapter(
+                    child: _buildSectionHeader('Appearance', isDark),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _buildSettingsCard([
+                      _buildSwitchTile(
+                        icon: Icons.dark_mode_rounded,
+                        title: 'Dark Mode',
+                        subtitle: 'Switch to dark theme',
+                        value: widget.themeNotifier.isDarkMode,
+                        onChanged: _toggleDarkMode,
+                        isDark: isDark,
+                      ),
+                    ], isDark),
+                  ),
+
                   // Notification Settings Section
                   SliverToBoxAdapter(
-                    child: _buildSectionHeader('Notifications'),
+                    child: _buildSectionHeader('Notifications', isDark),
                   ),
                   SliverToBoxAdapter(
                     child: _buildSettingsCard([
@@ -256,8 +291,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           setState(() => _notificationsEnabled = val);
                           _saveSettings();
                         },
+                        isDark: isDark,
                       ),
-                      _buildDivider(),
+                      _buildDivider(isDark),
                       _buildSwitchTile(
                         icon: Icons.bluetooth_connected_rounded,
                         title: 'Connection Alerts',
@@ -267,20 +303,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           setState(() => _connectionAlerts = val);
                           _saveSettings();
                         },
+                        isDark: isDark,
                       ),
-                      _buildDivider(),
+                      _buildDivider(isDark),
                       _buildActionTile(
                         icon: Icons.notifications_active_rounded,
                         title: 'Test Notifications',
                         subtitle: 'Send a test notification',
                         onTap: _testNotifications,
+                        isDark: isDark,
                       ),
-                    ]),
+                    ], isDark),
                   ),
 
                   // Device Settings Section
                   SliverToBoxAdapter(
-                    child: _buildSectionHeader('Device'),
+                    child: _buildSectionHeader('Device', isDark),
                   ),
                   SliverToBoxAdapter(
                     child: _buildSettingsCard([
@@ -293,8 +331,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           setState(() => _autoReconnect = val);
                           _saveSettings();
                         },
+                        isDark: isDark,
                       ),
-                      _buildDivider(),
+                      _buildDivider(isDark),
                       _buildSwitchTile(
                         icon: Icons.vibration_rounded,
                         title: 'Vibration',
@@ -304,13 +343,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           setState(() => _vibrationEnabled = val);
                           _saveSettings();
                         },
+                        isDark: isDark,
                       ),
-                    ]),
+                    ], isDark),
                   ),
 
                   // Permissions Section
                   SliverToBoxAdapter(
-                    child: _buildSectionHeader('Permissions'),
+                    child: _buildSectionHeader('Permissions', isDark),
                   ),
                   SliverToBoxAdapter(
                     child: _buildSettingsCard([
@@ -319,21 +359,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         title: 'Check Permissions',
                         subtitle: 'Verify all required permissions',
                         onTap: _checkPermissions,
+                        isDark: isDark,
                       ),
-                      _buildDivider(),
+                      _buildDivider(isDark),
                       _buildActionTile(
                         icon: Icons.settings_rounded,
                         title: 'App Settings',
                         subtitle: 'Open system app settings',
                         onTap: _openAppSettings,
                         showArrow: true,
+                        isDark: isDark,
                       ),
-                    ]),
+                    ], isDark),
                   ),
 
                   // Data Section
                   SliverToBoxAdapter(
-                    child: _buildSectionHeader('Data & Privacy'),
+                    child: _buildSectionHeader('Data & Privacy', isDark),
                   ),
                   SliverToBoxAdapter(
                     child: _buildSettingsCard([
@@ -341,23 +383,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         icon: Icons.history_rounded,
                         title: 'SOS History',
                         subtitle: 'View past SOS alerts',
-                        onTap: () => Navigator.of(context).pushNamed('/history'),
+                        onTap: () => context.push('/history'),
                         showArrow: true,
+                        isDark: isDark,
                       ),
-                      _buildDivider(),
+                      _buildDivider(isDark),
                       _buildActionTile(
                         icon: Icons.delete_outline_rounded,
                         title: 'Clear All Data',
                         subtitle: 'Delete contacts, devices, and history',
                         onTap: _clearAllData,
                         isDestructive: true,
+                        isDark: isDark,
                       ),
-                    ]),
+                    ], isDark),
                   ),
 
                   // About Section
                   SliverToBoxAdapter(
-                    child: _buildSectionHeader('About'),
+                    child: _buildSectionHeader('About', isDark),
                   ),
                   SliverToBoxAdapter(
                     child: _buildSettingsCard([
@@ -366,24 +410,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         title: 'App Version',
                         subtitle: 'SafeHer v1.0.0',
                         onTap: () {},
+                        isDark: isDark,
                       ),
-                      _buildDivider(),
+                      _buildDivider(isDark),
                       _buildActionTile(
                         icon: Icons.privacy_tip_outlined,
                         title: 'Privacy Policy',
                         subtitle: 'Read our privacy policy',
                         onTap: _openPrivacyPolicy,
                         showArrow: true,
+                        isDark: isDark,
                       ),
-                      _buildDivider(),
+                      _buildDivider(isDark),
                       _buildActionTile(
                         icon: Icons.description_outlined,
                         title: 'Terms of Service',
                         subtitle: 'Read our terms of service',
                         onTap: _openTermsOfService,
                         showArrow: true,
+                        isDark: isDark,
                       ),
-                    ]),
+                    ], isDark),
                   ),
 
                   // Footer
@@ -396,12 +443,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             width: 60,
                             height: 60,
                             decoration: BoxDecoration(
-                              gradient: AppTheme.heroGradient,
+                              color: AppTheme.primaryColor,
                               borderRadius: BorderRadius.circular(15),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.shield_rounded,
-                              color: Colors.white,
+                              color: AppTheme.textOnGold,
                               size: 32,
                             ),
                           ),
@@ -419,9 +466,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Made with ❤️ for women\'s safety',
+                            'Made with love for women\'s safety',
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppTheme.textMuted,
+                              color: isDark ? AppTheme.textMutedDark : AppTheme.textMuted,
                             ),
                           ),
                         ],
@@ -438,27 +485,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(String title, bool isDark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
       child: Text(
         title,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          color: AppTheme.textSecondary,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+          color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
           fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
         ),
       ),
     );
   }
 
-  Widget _buildSettingsCard(List<Widget> children) {
+  Widget _buildSettingsCard(List<Widget> children, bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
         decoration: BoxDecoration(
-          color: AppTheme.surfaceLight,
+          color: isDark ? AppTheme.cardDark : AppTheme.cardLight,
           borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-          boxShadow: AppTheme.cardShadow,
+          border: Border.all(
+            color: isDark ? AppTheme.borderDark : AppTheme.borderLight,
+          ),
         ),
         child: Column(children: children),
       ),
@@ -471,25 +521,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required String subtitle,
     required bool value,
     required ValueChanged<bool> onChanged,
+    required bool isDark,
   }) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
           Container(
-            width: 44,
-            height: 44,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
+              color: isDark ? AppTheme.subtleGoldDark : AppTheme.subtleGold,
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               icon,
               color: AppTheme.primaryColor,
-              size: 22,
+              size: 20,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -523,6 +574,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required VoidCallback onTap,
     bool showArrow = false,
     bool isDestructive = false,
+    required bool isDark,
   }) {
     return InkWell(
       onTap: onTap,
@@ -532,21 +584,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Row(
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: isDestructive
                     ? AppTheme.error.withValues(alpha: 0.1)
-                    : AppTheme.primaryColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
+                    : (isDark ? AppTheme.subtleGoldDark : AppTheme.subtleGold),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
                 icon,
                 color: isDestructive ? AppTheme.error : AppTheme.primaryColor,
-                size: 22,
+                size: 20,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -566,9 +618,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             if (showArrow)
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
-                color: AppTheme.textMuted,
+                color: isDark ? AppTheme.textMutedDark : AppTheme.textMuted,
               ),
           ],
         ),
@@ -576,12 +628,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildDivider() {
+  Widget _buildDivider(bool isDark) {
     return Divider(
       height: 1,
-      indent: 76,
+      indent: 70,
       endIndent: 16,
-      color: Colors.grey.shade200,
+      color: isDark ? AppTheme.borderDark : AppTheme.borderLight,
     );
   }
 }

@@ -135,10 +135,13 @@ class _PairDeviceScreenState extends State<PairDeviceScreen>
 
   Future<void> _showPermissionReminder(List<Permission> missing) async {
     final labels = missing.map(_permissionName).join(', ');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
+          backgroundColor: isDark ? AppTheme.cardDark : AppTheme.cardLight,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
           ),
@@ -152,16 +155,14 @@ class _PairDeviceScreenState extends State<PairDeviceScreen>
               onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('Later'),
             ),
-            GradientButton(
+            ElevatedButton(
               onPressed: () async {
                 await openAppSettings();
                 if (dialogContext.mounted) {
                   Navigator.of(dialogContext).pop();
                 }
               },
-              text: 'Open Settings',
-              width: 140,
-              height: 44,
+              child: const Text('Open Settings'),
             ),
           ],
         );
@@ -262,11 +263,14 @@ class _PairDeviceScreenState extends State<PairDeviceScreen>
   }
 
   Widget _buildSuccessDialog() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) Navigator.of(context).pop();
     });
 
     return Dialog(
+      backgroundColor: isDark ? AppTheme.cardDark : AppTheme.cardLight,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
       ),
@@ -276,22 +280,22 @@ class _PairDeviceScreenState extends State<PairDeviceScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 80,
-              height: 80,
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
-                gradient: AppTheme.successGradient,
+                color: AppTheme.success,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.check_rounded,
                 color: Colors.white,
-                size: 48,
+                size: 40,
               ),
             ),
             const SizedBox(height: 24),
             Text(
               'Connected!',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -299,7 +303,7 @@ class _PairDeviceScreenState extends State<PairDeviceScreen>
             Text(
               'Your SOS keychain is ready',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppTheme.textSecondary,
+                color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
               ),
             ),
           ],
@@ -310,7 +314,10 @@ class _PairDeviceScreenState extends State<PairDeviceScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
+      backgroundColor: isDark ? AppTheme.backgroundDark : AppTheme.backgroundLight,
       body: SafeArea(
         child: Column(
           children: [
@@ -319,11 +326,22 @@ class _PairDeviceScreenState extends State<PairDeviceScreen>
               padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
-                  IconButton(
-                    onPressed: () => context.go('/home'),
-                    icon: const Icon(Icons.arrow_back_rounded),
-                    style: IconButton.styleFrom(
-                      backgroundColor: AppTheme.backgroundLight,
+                  GestureDetector(
+                    onTap: () => context.go('/home'),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDark ? AppTheme.borderDark : AppTheme.borderLight,
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.arrow_back_rounded,
+                        color: isDark ? AppTheme.textPrimaryDark : AppTheme.textPrimary,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -338,7 +356,7 @@ class _PairDeviceScreenState extends State<PairDeviceScreen>
                         Text(
                           'Connect your SOS keychain',
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppTheme.textSecondary,
+                            color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
                           ),
                         ),
                       ],
@@ -353,11 +371,10 @@ class _PairDeviceScreenState extends State<PairDeviceScreen>
             // Scan button area
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 20),
-              padding: const EdgeInsets.all(32),
+              padding: const EdgeInsets.all(28),
               decoration: BoxDecoration(
-                gradient: AppTheme.heroGradient,
+                color: AppTheme.primaryColor,
                 borderRadius: BorderRadius.circular(AppTheme.radiusXLarge),
-                boxShadow: AppTheme.softShadow,
               ),
               child: Column(
                 children: [
@@ -370,80 +387,86 @@ class _PairDeviceScreenState extends State<PairDeviceScreen>
                         children: [
                           if (_isScanning) ...[
                             Container(
-                              width: 120 + (_scanAnimationController.value * 40),
-                              height: 120 + (_scanAnimationController.value * 40),
+                              width: 100 + (_scanAnimationController.value * 30),
+                              height: 100 + (_scanAnimationController.value * 30),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.2 * (1 - _scanAnimationController.value)),
+                                  color: AppTheme.textOnGold.withValues(alpha: 0.2 * (1 - _scanAnimationController.value)),
                                   width: 2,
                                 ),
                               ),
                             ),
                             Container(
-                              width: 100 + (_scanAnimationController.value * 20),
-                              height: 100 + (_scanAnimationController.value * 20),
+                              width: 80 + (_scanAnimationController.value * 15),
+                              height: 80 + (_scanAnimationController.value * 15),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.3 * (1 - _scanAnimationController.value)),
+                                  color: AppTheme.textOnGold.withValues(alpha: 0.3 * (1 - _scanAnimationController.value)),
                                   width: 2,
                                 ),
                               ),
                             ),
                           ],
                           Container(
-                            width: 80,
-                            height: 80,
+                            width: 70,
+                            height: 70,
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
+                              color: AppTheme.textOnGold.withValues(alpha: 0.15),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               _isScanning
                                   ? Icons.bluetooth_searching_rounded
                                   : Icons.bluetooth_rounded,
-                              color: Colors.white,
-                              size: 40,
+                              color: AppTheme.textOnGold,
+                              size: 32,
                             ),
                           ),
                         ],
                       );
                     },
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                   Text(
                     _isScanning ? 'Scanning for devices...' : 'Ready to Scan',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
+                    style: TextStyle(
+                      color: AppTheme.textOnGold,
+                      fontSize: 17,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     _isScanning
                         ? 'Make sure your keychain is powered on'
                         : 'Looking for "${BLEConstants.deviceName}"',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.8),
-                      fontSize: 14,
+                      color: AppTheme.textOnGold.withValues(alpha: 0.8),
+                      fontSize: 13,
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                   SizedBox(
-                    width: 180,
+                    width: 160,
                     child: ElevatedButton(
                       onPressed: _isScanning ? _stopScan : _startScan,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: AppTheme.primaryColor,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: isDark ? AppTheme.backgroundDark : Colors.white,
+                        foregroundColor: AppTheme.primaryDark,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                        ),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(_isScanning ? Icons.stop_rounded : Icons.search_rounded),
+                          Icon(
+                            _isScanning ? Icons.stop_rounded : Icons.search_rounded,
+                            size: 20,
+                          ),
                           const SizedBox(width: 8),
                           Text(_isScanning ? 'Stop Scan' : 'Start Scan'),
                         ],
@@ -456,7 +479,7 @@ class _PairDeviceScreenState extends State<PairDeviceScreen>
 
             const SizedBox(height: 24),
 
-            // Device list
+            // Device list header
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
@@ -479,13 +502,13 @@ class _PairDeviceScreenState extends State<PairDeviceScreen>
             // Device list
             Expanded(
               child: _scanResults.isEmpty
-                  ? _buildEmptyState()
+                  ? _buildEmptyState(isDark)
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       itemCount: _scanResults.length,
                       itemBuilder: (context, index) {
                         final result = _scanResults[index];
-                        return _buildDeviceCard(result);
+                        return _buildDeviceCard(result, isDark);
                       },
                     ),
             ),
@@ -506,21 +529,21 @@ class _PairDeviceScreenState extends State<PairDeviceScreen>
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(bool isDark) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.bluetooth_disabled_rounded,
-            size: 64,
-            color: AppTheme.textMuted,
+            size: 56,
+            color: isDark ? AppTheme.textMutedDark : AppTheme.textMuted,
           ),
           const SizedBox(height: 16),
           Text(
             _isScanning ? 'Searching...' : 'No devices found',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: AppTheme.textSecondary,
+              color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
             ),
           ),
           const SizedBox(height: 8),
@@ -536,114 +559,128 @@ class _PairDeviceScreenState extends State<PairDeviceScreen>
     );
   }
 
-  Widget _buildDeviceCard(ScanResult result) {
+  Widget _buildDeviceCard(ScanResult result, bool isDark) {
     final device = result.device;
     final isSOSDevice = device.platformName == BLEConstants.deviceName;
     final isConnecting = _connectingDeviceId == device.remoteId.toString();
     final signalStrength = _getSignalStrength(result.rssi);
 
-    return GradientCard(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      gradient: isSOSDevice
-          ? LinearGradient(
-              colors: [
-                AppTheme.primaryColor.withValues(alpha: 0.1),
-                AppTheme.secondaryColor.withValues(alpha: 0.05),
-              ],
-            )
-          : null,
-      onTap: isConnecting ? null : () => _connectToDevice(device),
-      child: Row(
-        children: [
-          // Device icon
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: isSOSDevice
-                  ? AppTheme.primaryColor.withValues(alpha: 0.15)
-                  : Colors.grey.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              isSOSDevice ? Icons.key_rounded : Icons.bluetooth_rounded,
-              color: isSOSDevice ? AppTheme.primaryColor : AppTheme.textSecondary,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-
-          // Device info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      decoration: BoxDecoration(
+        color: isSOSDevice
+            ? (isDark ? AppTheme.subtleGoldDark : AppTheme.subtleGold)
+            : (isDark ? AppTheme.cardDark : AppTheme.cardLight),
+        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+        border: Border.all(
+          color: isSOSDevice
+              ? AppTheme.primaryColor.withValues(alpha: 0.3)
+              : (isDark ? AppTheme.borderDark : AppTheme.borderLight),
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: isConnecting ? null : () => _connectToDevice(device),
+          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    Text(
-                      device.platformName,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    if (isSOSDevice) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Text(
-                          'SOS',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                // Device icon
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: isSOSDevice
+                        ? AppTheme.primaryColor.withValues(alpha: 0.15)
+                        : (isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    isSOSDevice ? Icons.key_rounded : Icons.bluetooth_rounded,
+                    color: isSOSDevice 
+                        ? AppTheme.primaryColor 
+                        : (isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary),
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 14),
+
+                // Device info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            device.platformName,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
+                          if (isSOSDevice) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                'SOS',
+                                style: TextStyle(
+                                  color: AppTheme.textOnGold,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            signalStrength.icon,
+                            size: 14,
+                            color: signalStrength.color,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${signalStrength.label} signal',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
                       ),
                     ],
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(
-                      signalStrength.icon,
-                      size: 14,
-                      color: signalStrength.color,
+
+                // Connect button/indicator
+                if (isConnecting)
+                  SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${signalStrength.label} signal',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ),
+                  )
+                else
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: isDark ? AppTheme.textMutedDark : AppTheme.textMuted,
+                  ),
               ],
             ),
           ),
-
-          // Connect button/indicator
-          if (isConnecting)
-            const SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.5,
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
-              ),
-            )
-          else
-            Icon(
-              Icons.chevron_right_rounded,
-              color: AppTheme.textMuted,
-            ),
-        ],
+        ),
       ),
     );
   }

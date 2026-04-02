@@ -82,10 +82,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Future<void> _showPermissionReminder(List<Permission> missing) async {
     final labels = missing.map(_permissionName).join(', ');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
+          backgroundColor: isDark ? AppTheme.cardDark : AppTheme.cardLight,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
           ),
@@ -94,7 +97,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppTheme.warning.withValues(alpha: 0.2),
+                  color: AppTheme.warning.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -173,7 +176,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
+      backgroundColor: isDark ? AppTheme.backgroundDark : AppTheme.backgroundLight,
       body: SafeArea(
         child: StreamBuilder<bool>(
           stream: widget.bleService.connectionStream,
@@ -189,19 +195,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     child: Row(
                       children: [
                         Container(
-                          width: 50,
-                          height: 50,
+                          width: 48,
+                          height: 48,
                           decoration: BoxDecoration(
-                            gradient: AppTheme.heroGradient,
-                            borderRadius: BorderRadius.circular(15),
+                            color: AppTheme.primaryColor,
+                            borderRadius: BorderRadius.circular(14),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.shield_rounded,
-                            color: Colors.white,
-                            size: 28,
+                            color: AppTheme.textOnGold,
+                            size: 26,
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 14),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,7 +219,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               Text(
                                 connected ? 'Ready to protect you' : 'Connect your keychain',
                                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: AppTheme.textSecondary,
+                                  color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
                                 ),
                               ),
                             ],
@@ -226,7 +232,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
                 // Connection Status Card
                 SliverToBoxAdapter(
-                  child: _buildConnectionCard(connected),
+                  child: _buildConnectionCard(connected, isDark),
                 ),
 
                 // Quick Actions
@@ -248,7 +254,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       crossAxisCount: 2,
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
-                      childAspectRatio: 1.1,
+                      childAspectRatio: 1.15,
                     ),
                     delegate: SliverChildListDelegate([
                       _buildActionCard(
@@ -257,16 +263,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         subtitle: _pairedDevice != null ? 'Connected' : 'Not paired',
                         color: AppTheme.info,
                         onTap: () => context.go('/pair'),
+                        isDark: isDark,
                       ),
                       _buildActionCard(
                         icon: Icons.people_rounded,
                         title: 'Contacts',
                         subtitle: '$_contactCount configured',
-                        color: AppTheme.secondaryColor,
+                        color: AppTheme.primaryColor,
                         onTap: () async {
                           await context.push('/contacts');
                           _loadData();
                         },
+                        isDark: isDark,
                       ),
                       _buildActionCard(
                         icon: Icons.history_rounded,
@@ -274,13 +282,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         subtitle: 'View past alerts',
                         color: AppTheme.warning,
                         onTap: () => context.push('/history'),
+                        isDark: isDark,
                       ),
                       _buildActionCard(
                         icon: Icons.settings_rounded,
                         title: 'Settings',
                         subtitle: 'App preferences',
-                        color: AppTheme.textSecondary,
+                        color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
                         onTap: () => context.push('/settings'),
+                        isDark: isDark,
                       ),
                     ]),
                   ),
@@ -301,16 +311,34 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         Text(
                           'Send a test alert to verify everything works',
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppTheme.textSecondary,
+                            color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
                           ),
                         ),
-                        const SizedBox(height: 20),
-                        GradientButton(
-                          onPressed: _isTestingSOS ? null : _testSOS,
-                          text: 'Test SOS Alert',
-                          icon: Icons.warning_rounded,
-                          isLoading: _isTestingSOS,
-                          gradient: AppTheme.sosGradient,
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: _isTestingSOS ? null : _testSOS,
+                            icon: _isTestingSOS 
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(Icons.warning_rounded),
+                            label: Text(_isTestingSOS ? 'Sending...' : 'Test SOS Alert'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.error,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -319,7 +347,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
                 // Safety Tips
                 SliverToBoxAdapter(
-                  child: _buildSafetyTips(),
+                  child: _buildSafetyTips(isDark),
                 ),
 
                 const SliverToBoxAdapter(
@@ -333,15 +361,21 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildConnectionCard(bool connected) {
+  Widget _buildConnectionCard(bool connected, bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: connected ? AppTheme.successGradient : AppTheme.heroGradient,
-          borderRadius: BorderRadius.circular(AppTheme.radiusXLarge),
-          boxShadow: AppTheme.softShadow,
+          color: connected 
+              ? AppTheme.success.withValues(alpha: isDark ? 0.15 : 0.1)
+              : (isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight),
+          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+          border: Border.all(
+            color: connected 
+                ? AppTheme.success.withValues(alpha: 0.3)
+                : (isDark ? AppTheme.borderDark : AppTheme.borderLight),
+          ),
         ),
         child: Row(
           children: [
@@ -350,44 +384,42 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               animation: _pulseController,
               builder: (context, child) {
                 return Container(
-                  width: 70,
-                  height: 70,
+                  width: 56,
+                  height: 56,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.2),
-                    boxShadow: connected
-                        ? [
-                            BoxShadow(
-                              color: Colors.white.withValues(
-                                alpha: 0.3 * _pulseController.value,
-                              ),
-                              blurRadius: 20 * _pulseController.value,
-                              spreadRadius: 5 * _pulseController.value,
+                    color: connected 
+                        ? AppTheme.success.withValues(alpha: 0.15)
+                        : AppTheme.primaryColor.withValues(alpha: 0.1),
+                    border: connected
+                        ? Border.all(
+                            color: AppTheme.success.withValues(
+                              alpha: 0.3 + (0.3 * _pulseController.value),
                             ),
-                          ]
+                            width: 2,
+                          )
                         : null,
                   ),
                   child: Icon(
                     connected
                         ? Icons.bluetooth_connected_rounded
                         : Icons.bluetooth_disabled_rounded,
-                    color: Colors.white,
-                    size: 36,
+                    color: connected ? AppTheme.success : AppTheme.primaryColor,
+                    size: 28,
                   ),
                 );
               },
             ),
-            const SizedBox(width: 20),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     connected ? 'Keychain Connected' : 'Keychain Disconnected',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: connected ? AppTheme.success : null,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -395,10 +427,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     connected
                         ? 'Your SOS keychain is active and monitoring'
                         : 'Connect your keychain to enable protection',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 14,
-                    ),
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                   if (_pairedDevice != null && connected) ...[
                     const SizedBox(height: 8),
@@ -408,13 +437,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: AppTheme.success.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         _pairedDevice!.name,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: AppTheme.success,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
@@ -424,6 +453,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ],
               ),
             ),
+            if (!connected)
+              IconButton(
+                onPressed: () => context.go('/pair'),
+                icon: Icon(
+                  Icons.chevron_right_rounded,
+                  color: isDark ? AppTheme.textMutedDark : AppTheme.textMuted,
+                ),
+              ),
           ],
         ),
       ),
@@ -436,53 +473,63 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     required String subtitle,
     required Color color,
     required VoidCallback onTap,
+    required bool isDark,
   }) {
-    return GradientCard(
+    return GestureDetector(
       onTap: onTap,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 26,
-            ),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? AppTheme.cardDark : AppTheme.cardLight,
+          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+          border: Border.all(
+            color: isDark ? AppTheme.borderDark : AppTheme.borderLight,
           ),
-          const Spacer(),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: color,
+                size: 24,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ],
+            const Spacer(),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildSafetyTips() {
+  Widget _buildSafetyTips(bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppTheme.info.withValues(alpha: 0.08),
+          color: isDark ? AppTheme.subtleGoldDark : AppTheme.subtleGold,
           borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
           border: Border.all(
-            color: AppTheme.info.withValues(alpha: 0.2),
+            color: AppTheme.primaryColor.withValues(alpha: 0.2),
           ),
         ),
         child: Column(
@@ -491,33 +538,33 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: AppTheme.info.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
+                    color: AppTheme.primaryColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
                   ),
                   child: Icon(
                     Icons.lightbulb_rounded,
-                    color: AppTheme.info,
-                    size: 20,
+                    color: AppTheme.primaryColor,
+                    size: 18,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Text(
                   'Safety Tip',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppTheme.info,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: AppTheme.primaryDark,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text(
               'Hold the SOS button on your keychain for 2 seconds to trigger an emergency alert. '
               'Your location will be automatically sent to all your emergency contacts.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppTheme.textSecondary,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
                 height: 1.5,
               ),
             ),

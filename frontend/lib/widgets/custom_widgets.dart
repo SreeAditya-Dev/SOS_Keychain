@@ -1,105 +1,152 @@
 import 'package:safeher/constants/app_theme.dart';
 import 'package:flutter/material.dart';
 
-/// A beautiful gradient button with shadow effect
+/// A clean solid button with the gold accent color
 class GradientButton extends StatelessWidget {
   const GradientButton({
     super.key,
     required this.onPressed,
     required this.text,
-    this.gradient,
+    this.gradient, // Kept for compatibility but ignored
     this.icon,
     this.isLoading = false,
     this.width,
-    this.height = 56,
+    this.height = 52,
+    this.outlined = false,
   });
 
   final VoidCallback? onPressed;
   final String text;
-  final Gradient? gradient;
+  final Gradient? gradient; // Deprecated - kept for compatibility
   final IconData? icon;
   final bool isLoading;
   final double? width;
   final double height;
+  final bool outlined;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    if (outlined) {
+      return SizedBox(
+        width: width ?? double.infinity,
+        height: height,
+        child: OutlinedButton(
+          onPressed: isLoading ? null : onPressed,
+          style: OutlinedButton.styleFrom(
+            side: BorderSide(
+              color: onPressed != null 
+                  ? AppTheme.primaryColor 
+                  : (isDark ? AppTheme.borderDark : AppTheme.borderLight),
+              width: 1.5,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+            ),
+          ),
+          child: _buildContent(context, outlined: true),
+        ),
+      );
+    }
+    
+    return SizedBox(
       width: width ?? double.infinity,
       height: height,
-      decoration: BoxDecoration(
-        gradient: onPressed != null 
-            ? (gradient ?? AppTheme.primaryGradient) 
-            : LinearGradient(
-                colors: [Colors.grey.shade400, Colors.grey.shade500],
-              ),
-        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        boxShadow: onPressed != null ? AppTheme.buttonShadow : null,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: isLoading ? null : onPressed,
-          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-          child: Center(
-            child: isLoading
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (icon != null) ...[
-                        Icon(icon, color: Colors.white, size: 22),
-                        const SizedBox(width: 10),
-                      ],
-                      Text(
-                        text,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
+      child: ElevatedButton(
+        onPressed: isLoading ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: onPressed != null 
+              ? AppTheme.primaryColor 
+              : (isDark ? AppTheme.surfaceDark : Colors.grey.shade300),
+          foregroundColor: AppTheme.textOnGold,
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
           ),
         ),
+        child: _buildContent(context),
       ),
+    );
+  }
+  
+  Widget _buildContent(BuildContext context, {bool outlined = false}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = outlined 
+        ? AppTheme.primaryColor 
+        : AppTheme.textOnGold;
+    
+    if (isLoading) {
+      return SizedBox(
+        width: 24,
+        height: 24,
+        child: CircularProgressIndicator(
+          strokeWidth: 2.5,
+          valueColor: AlwaysStoppedAnimation<Color>(
+            outlined ? AppTheme.primaryColor : AppTheme.textOnGold,
+          ),
+        ),
+      );
+    }
+    
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (icon != null) ...[
+          Icon(icon, color: textColor, size: 20),
+          const SizedBox(width: 8),
+        ],
+        Text(
+          text,
+          style: TextStyle(
+            color: textColor,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }
 
-/// A beautiful card with gradient background and shadow
+/// A clean card without gradients
 class GradientCard extends StatelessWidget {
   const GradientCard({
     super.key,
     required this.child,
-    this.gradient,
+    this.gradient, // Kept for compatibility but ignored
     this.padding,
     this.margin,
     this.onTap,
+    this.highlighted = false,
   });
 
   final Widget child;
-  final Gradient? gradient;
+  final Gradient? gradient; // Deprecated - kept for compatibility
   final EdgeInsetsGeometry? padding;
   final EdgeInsetsGeometry? margin;
   final VoidCallback? onTap;
+  final bool highlighted;
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
       margin: margin,
       decoration: BoxDecoration(
-        gradient: gradient ?? AppTheme.cardGradient,
+        color: highlighted 
+            ? (isDark ? AppTheme.subtleGoldDark : AppTheme.subtleGold)
+            : (isDark ? AppTheme.cardDark : AppTheme.cardLight),
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        boxShadow: AppTheme.cardShadow,
+        border: Border.all(
+          color: highlighted 
+              ? AppTheme.primaryColor.withValues(alpha: 0.3)
+              : (isDark ? AppTheme.borderDark : AppTheme.borderLight),
+          width: 1,
+        ),
       ),
       child: Material(
         color: Colors.transparent,
@@ -107,7 +154,7 @@ class GradientCard extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
           child: Padding(
-            padding: padding ?? const EdgeInsets.all(20),
+            padding: padding ?? const EdgeInsets.all(16),
             child: child,
           ),
         ),
@@ -122,7 +169,7 @@ class ConnectionStatusIndicator extends StatelessWidget {
     super.key,
     required this.isConnected,
     this.showText = true,
-    this.size = 12,
+    this.size = 10,
   });
 
   final bool isConnected;
@@ -131,6 +178,8 @@ class ConnectionStatusIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = isConnected ? AppTheme.connected : AppTheme.disconnected;
+    
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -139,15 +188,7 @@ class ConnectionStatusIndicator extends StatelessWidget {
           height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isConnected ? AppTheme.connected : AppTheme.disconnected,
-            boxShadow: [
-              BoxShadow(
-                color: (isConnected ? AppTheme.connected : AppTheme.disconnected)
-                    .withValues(alpha: 0.5),
-                blurRadius: 8,
-                spreadRadius: 2,
-              ),
-            ],
+            color: color,
           ),
         ),
         if (showText) ...[
@@ -155,9 +196,9 @@ class ConnectionStatusIndicator extends StatelessWidget {
           Text(
             isConnected ? 'Connected' : 'Disconnected',
             style: TextStyle(
-              color: isConnected ? AppTheme.connected : AppTheme.disconnected,
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
+              color: color,
+              fontWeight: FontWeight.w500,
+              fontSize: 13,
             ),
           ),
         ],
@@ -166,7 +207,7 @@ class ConnectionStatusIndicator extends StatelessWidget {
   }
 }
 
-/// Beautiful section header
+/// Section header
 class SectionHeader extends StatelessWidget {
   const SectionHeader({
     super.key,
@@ -191,7 +232,7 @@ class SectionHeader extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: Theme.of(context).textTheme.headlineSmall,
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
                 if (subtitle != null) ...[
                   const SizedBox(height: 4),
@@ -270,6 +311,8 @@ class _PulseAnimationState extends State<PulseAnimation>
       return widget.child;
     }
 
+    final pulseColor = widget.color ?? AppTheme.primaryColor;
+
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
@@ -277,19 +320,25 @@ class _PulseAnimationState extends State<PulseAnimation>
           alignment: Alignment.center,
           children: [
             Container(
-              width: 200 * _animation.value,
-              height: 200 * _animation.value,
+              width: 180 * _animation.value,
+              height: 180 * _animation.value,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: (widget.color ?? AppTheme.primaryColor).withValues(alpha: 0.1 * (2 - _animation.value)),
+                border: Border.all(
+                  color: pulseColor.withValues(alpha: 0.15 * (2 - _animation.value)),
+                  width: 2,
+                ),
               ),
             ),
             Container(
-              width: 160 * _animation.value,
-              height: 160 * _animation.value,
+              width: 140 * _animation.value,
+              height: 140 * _animation.value,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: (widget.color ?? AppTheme.primaryColor).withValues(alpha: 0.15 * (2 - _animation.value)),
+                border: Border.all(
+                  color: pulseColor.withValues(alpha: 0.25 * (2 - _animation.value)),
+                  width: 2,
+                ),
               ),
             ),
             widget.child,
@@ -317,6 +366,8 @@ class EmptyStateWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40),
@@ -324,21 +375,21 @@ class EmptyStateWidget extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                color: isDark ? AppTheme.subtleGoldDark : AppTheme.subtleGold,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
-                size: 48,
+                size: 40,
                 color: AppTheme.primaryColor,
               ),
             ),
             const SizedBox(height: 24),
             Text(
               title,
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: Theme.of(context).textTheme.titleLarge,
               textAlign: TextAlign.center,
             ),
             if (subtitle != null) ...[
@@ -346,7 +397,7 @@ class EmptyStateWidget extends StatelessWidget {
               Text(
                 subtitle!,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppTheme.textSecondary,
+                  color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -377,23 +428,25 @@ class FeatureItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
+              color: isDark ? AppTheme.subtleGoldDark : AppTheme.subtleGold,
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               icon,
               color: AppTheme.primaryColor,
-              size: 24,
+              size: 22,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -402,7 +455,7 @@ class FeatureItem extends StatelessWidget {
                   title,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   description,
                   style: Theme.of(context).textTheme.bodySmall,
@@ -412,6 +465,53 @@ class FeatureItem extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Settings tile widget
+class SettingsTile extends StatelessWidget {
+  const SettingsTile({
+    super.key,
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.trailing,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isDark ? AppTheme.subtleGoldDark : AppTheme.subtleGold,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          icon,
+          color: AppTheme.primaryColor,
+          size: 20,
+        ),
+      ),
+      title: Text(title),
+      subtitle: subtitle != null ? Text(subtitle!) : null,
+      trailing: trailing ?? (onTap != null 
+          ? Icon(
+              Icons.chevron_right,
+              color: isDark ? AppTheme.textMutedDark : AppTheme.textMuted,
+            )
+          : null),
+      onTap: onTap,
     );
   }
 }

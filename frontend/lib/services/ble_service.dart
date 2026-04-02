@@ -215,7 +215,35 @@ class BLEService {
     _device = device;
 
     try {
-      await device.connect(autoConnect: true, timeout: const Duration(seconds: 15));
+      // IMPORTANT: Disconnect first if there's an existing connection
+      // This helps avoid Android BLE connection issues
+      try {
+        await device.disconnect();
+        await Future.delayed(const Duration(milliseconds: 300));
+      } catch (e) {
+        // Ignore disconnect errors - device may not be connected
+      }
+      
+      // IMPORTANT: Use autoConnect: false for initial connection on Android
+      // autoConnect: true can cause indefinite connection attempts and timeouts
+      // Increase timeout to 30 seconds for more reliability
+      await device.connect(
+        autoConnect: false,
+        timeout: const Duration(seconds: 30),
+      );
+      
+      // Small delay after connection for Android stability
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      // Request higher MTU for better data transfer (Android specific)
+      // ESP32 typically supports up to 517 bytes, but 512 is a safe value
+      try {
+        await device.requestMtu(512);
+      } catch (e) {
+        // MTU request may fail on some devices, continue anyway
+        print('MTU request failed (non-critical): $e');
+      }
+      
     } catch (e) {
       final error = BLEError.fromException(e);
       _errorController.add(error);
@@ -243,6 +271,9 @@ class BLEService {
     _connectionController.add(true);
 
     try {
+      // Another small delay before service discovery for stability
+      await Future.delayed(const Duration(milliseconds: 300));
+      
       final services = await device.discoverServices();
       bool serviceFound = false;
       bool characteristicFound = false;
@@ -304,7 +335,7 @@ class BLEService {
     }
 
     await _connectionSubscription?.cancel();
-    _connectionSubscription = device.connectionState.listen((state) {
+    _connectionSubscription = device.connectionState.listen((state) async {
       if (state == BluetoothConnectionState.disconnected) {
         _isConnected = false;
         _connectionController.add(false);
@@ -318,12 +349,57 @@ class BLEService {
         // Attempt reconnection with exponential backoff
         if (!_disposed && _reconnectAttempts < _maxReconnectAttempts) {
           _reconnectAttempts++;
-          final delay = Duration(seconds: 5 * _reconnectAttempts);
-          Future.delayed(delay, () {
-            if (!_disposed && !_isConnected) {
-              _connectToDevice(device, onSOSTrigger);
+          final delay = Duration(seconds: 3 * _reconnectAttempts);
+          await Future.delayed(delay);
+          if (!_disposed && !_isConnected) {
+            // For reconnection, we can use autoConnect: true
+            // This allows the system to reconnect when device becomes available
+            try {
+              await device.connect(
+                autoConnect: true,
+                timeout: const Duration(seconds: 30),
+              );
+            } catch (e) {
+              // Will retry via this same listener
+              print('Reconnection attempt $_reconnectAttempts failed: $e');
             }
-          });
+          }
+        }
+      } else if (state == BluetoothConnectionState.connected) {
+        // Handle successful reconnection
+        if (!_isConnected) {
+          _isConnected = true;
+          _reconnectAttempts = 0;
+          _connectionController.add(true);
+          
+          // Re-setup notifications after reconnection
+          try {
+            await Future.delayed(const Duration(milliseconds: 500));
+            final services = await device.discoverServices();
+            for (final service in services) {
+              if (service.uuid.toString().toLowerCase() == BLEConstants.serviceUUID.toLowerCase()) {
+                for (final char in service.characteristics) {
+                  if (char.uuid.toString().toLowerCase() == BLEConstants.sosCharUUID.toLowerCase()) {
+                    _sosChar = char;
+                    await char.setNotifyValue(true);
+                    await _notifSubscription?.cancel();
+                    _notifSubscription = char.lastValueStream.listen(
+                      (value) async {
+                        if (value.isNotEmpty) {
+                          final message = utf8.decode(value);
+                          if (message == BLEConstants.sosTriggerMessage) {
+                            await onSOSTrigger();
+                          }
+                        }
+                      },
+                    );
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            print('Failed to re-setup notifications: $e');
+          }
         }
       }
     });
