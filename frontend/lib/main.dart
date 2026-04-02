@@ -224,6 +224,10 @@ Future<void> _startForegroundService() async {
     return;
   }
   
+  // Request battery optimization exemption for reliable background operation
+  // This allows the app to work like Google Fit - even after swipe away
+  await FlutterForegroundTask.requestIgnoreBatteryOptimization();
+  
   await FlutterForegroundTask.startService(
     notificationTitle: 'SafeHer Active',
     notificationText: 'Your SOS keychain is connected and monitoring',
@@ -267,9 +271,10 @@ void initForegroundTask() {
       channelId: 'safeher_protection',
       channelName: 'SafeHer Protection',
       channelDescription: 'SafeHer is active — protecting you',
-      channelImportance: NotificationChannelImportance.LOW,
-      priority: NotificationPriority.LOW,
+      channelImportance: NotificationChannelImportance.DEFAULT,
+      priority: NotificationPriority.DEFAULT,
       showWhen: false,
+      visibility: NotificationVisibility.VISIBILITY_PUBLIC,
     ),
     iosNotificationOptions: const IOSNotificationOptions(),
     foregroundTaskOptions: ForegroundTaskOptions(
