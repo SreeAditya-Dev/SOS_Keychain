@@ -7,7 +7,9 @@
 const int buzzerPin = 4;
 const int buttonSOS = 15;   // Button 1: Hold 2 sec to trigger SOS
 const int buttonCtrl = 5;   // Button 2: Stop alarm / Reset BLE
-const int ledPin = 2;       // LED indicator
+const int ledPin = 12;      // External LED indicator (Changed from 2 to avoid built-in LED)
+                            // GPIO 2 is the built-in LED on most ESP32 boards
+                            // Use GPIO 12, 13, 14, or 16 for external LED
 
 // --- BLE UUIDs ---
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
