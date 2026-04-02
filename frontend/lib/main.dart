@@ -127,6 +127,7 @@ GoRouter _buildRouter({required bool onboardingDone}) {
         builder: (context, state) => SettingsScreen(
           storageService: _storageService,
           themeNotifier: themeNotifier,
+          bleService: _bleService,
         ),
       ),
       GoRoute(

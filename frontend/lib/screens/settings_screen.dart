@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:safeher/constants/app_theme.dart';
 import 'package:safeher/main.dart';
+import 'package:safeher/services/ble_service.dart';
 import 'package:safeher/services/notification_service.dart';
 import 'package:safeher/services/storage_service.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -12,10 +13,12 @@ class SettingsScreen extends StatefulWidget {
     super.key,
     required this.storageService,
     required this.themeNotifier,
+    required this.bleService,
   });
 
   final StorageService storageService;
   final ThemeNotifier themeNotifier;
+  final BLEService bleService;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -126,6 +129,81 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _unpairDevice() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pairedDevice = await widget.storageService.getPairedDevice();
+    
+    if (pairedDevice == null) {
+      _showSnackBar('No device paired', isSuccess: false);
+      return;
+    }
+    
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppTheme.cardDark : AppTheme.cardLight,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.warning.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.bluetooth_disabled_rounded,
+                color: AppTheme.warning,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text('Unpair Device'),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to unpair "${pairedDevice.name}"?\n\n'
+          'You will need to pair again to use SOS features.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.warning,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Unpair'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      // Disconnect from device
+      await widget.bleService.disconnect();
+      
+      // Clear paired device from storage
+      await widget.storageService.clearPairedDevice();
+      
+      if (mounted) {
+        _showSnackBar('Device unpaired successfully', isSuccess: true);
+        
+        // Navigate to pair screen
+        context.go('/pair');
+      }
+    }
   }
 
   Future<void> _clearAllData() async {
@@ -343,6 +421,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           setState(() => _vibrationEnabled = val);
                           _saveSettings();
                         },
+                        isDark: isDark,
+                      ),
+                      _buildDivider(isDark),
+                      _buildActionTile(
+                        icon: Icons.bluetooth_disabled_rounded,
+                        title: 'Unpair Device',
+                        subtitle: 'Disconnect and remove paired keychain',
+                        onTap: _unpairDevice,
+                        isDestructive: true,
                         isDark: isDark,
                       ),
                     ], isDark),

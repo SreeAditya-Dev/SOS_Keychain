@@ -198,13 +198,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryColor,
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: Icon(
-                            Icons.shield_rounded,
-                            color: AppTheme.textOnGold,
-                            size: 26,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(14),
+                            child: Image.asset(
+                              'assets/icons/safeher_logo.png',
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 14),

@@ -66,7 +66,22 @@ class MessagingService {
   }
 
   Future<bool> sendWhatsApp(String phone, String message) async {
-    final cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    // Keep only digits and + sign, then ensure country code exists
+    String cleanPhone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+    
+    // If phone doesn't start with +, add India country code (+91)
+    // Remove leading 0 if present (common in local numbers)
+    if (!cleanPhone.startsWith('+')) {
+      if (cleanPhone.startsWith('0')) {
+        cleanPhone = cleanPhone.substring(1);
+      }
+      // For WhatsApp, we need just digits with country code (no + sign)
+      cleanPhone = '91$cleanPhone';
+    } else {
+      // Remove the + sign for WhatsApp URL (it just needs digits)
+      cleanPhone = cleanPhone.substring(1);
+    }
+    
     final encoded = Uri.encodeComponent(message);
     final uri = Uri.parse('whatsapp://send?phone=$cleanPhone&text=$encoded');
     final fallbackUri = Uri.parse('https://wa.me/$cleanPhone?text=$encoded');

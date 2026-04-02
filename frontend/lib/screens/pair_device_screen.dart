@@ -257,7 +257,13 @@ class _PairDeviceScreenState extends State<PairDeviceScreen>
       builder: (context) => _buildSuccessDialog(),
     );
 
-    if (mounted) {
+    if (!mounted) return;
+
+    // Check if contacts already exist - skip contacts screen if at least one contact is present
+    final contacts = await widget.storageService.getContacts();
+    if (contacts.isNotEmpty) {
+      context.go('/home');
+    } else {
       context.go('/contacts');
     }
   }
