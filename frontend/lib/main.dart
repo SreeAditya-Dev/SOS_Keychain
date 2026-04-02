@@ -1,37 +1,57 @@
-import 'package:dt/models/sos_log.dart';
-import 'package:dt/screens/contacts_screen.dart';
-import 'package:dt/screens/home_screen.dart';
-import 'package:dt/screens/onboarding_screen.dart';
-import 'package:dt/screens/pair_device_screen.dart';
-import 'package:dt/screens/sos_triggered_screen.dart';
-import 'package:dt/services/ble_service.dart';
-import 'package:dt/services/sos_service.dart';
-import 'package:dt/services/storage_service.dart';
+import 'package:safeher/constants/app_theme.dart';
+import 'package:safeher/models/sos_log.dart';
+import 'package:safeher/screens/contacts_screen.dart';
+import 'package:safeher/screens/history_screen.dart';
+import 'package:safeher/screens/home_screen.dart';
+import 'package:safeher/screens/onboarding_screen.dart';
+import 'package:safeher/screens/pair_device_screen.dart';
+import 'package:safeher/screens/settings_screen.dart';
+import 'package:safeher/screens/sos_triggered_screen.dart';
+import 'package:safeher/services/ble_service.dart';
+import 'package:safeher/services/notification_service.dart';
+import 'package:safeher/services/sos_service.dart';
+import 'package:safeher/services/storage_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:go_router/go_router.dart';
 
 final _storageService = StorageService.instance;
 final _bleService = BLEService();
 final _sosService = SOSService(storageService: StorageService.instance);
-final _localNotifications = FlutterLocalNotificationsPlugin();
+final _notificationService = NotificationService.instance;
 
 late final GoRouter _router;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Set system UI overlay style for a cleaner look
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: AppTheme.backgroundLight,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
+
   initForegroundTask();
-  await _initLocalNotifications();
+  await _notificationService.initialize(
+    onNotificationTap: _handleNotificationTap,
+  );
+  await _notificationService.requestPermissions();
 
   final onboardingDone = await _storageService.isOnboardingDone();
   final pairedDevice = await _storageService.getPairedDevice();
 
   _router = _buildRouter(onboardingDone: onboardingDone);
   await _bleService.init(pairedDevice?.id, _handleSOSTrigger);
+  
+  // Listen for connection changes to show notifications
+  _bleService.connectionStream.listen(_handleConnectionChange);
 
-  runApp(const SOSKeychainApp());
+  runApp(const SafeHerApp());
 }
 
 GoRouter _buildRouter({required bool onboardingDone}) {
@@ -47,11 +67,20 @@ GoRouter _buildRouter({required bool onboardingDone}) {
         builder: (context, state) => PairDeviceScreen(
           bleService: _bleService,
           storageService: _storageService,
+          onSOSTrigger: _handleSOSTrigger,
         ),
       ),
       GoRoute(
         path: '/contacts',
         builder: (context, state) => ContactsScreen(storageService: _storageService),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => SettingsScreen(storageService: _storageService),
+      ),
+      GoRoute(
+        path: '/history',
+        builder: (context, state) => HistoryScreen(storageService: _storageService),
       ),
       GoRoute(
         path: '/home',
@@ -85,36 +114,53 @@ GoRouter _buildRouter({required bool onboardingDone}) {
 }
 
 Future<void> _handleSOSTrigger() async {
+  final contacts = await _storageService.getContacts();
   final log = await _sosService.triggerSOS();
-  await _localNotifications.show(
-    1001,
-    'SOS Triggered',
-    'Emergency alert sent to your contacts',
-    const NotificationDetails(
-      android: AndroidNotificationDetails(
-        'sos_keychain_alerts',
-        'SOS Alerts',
-        importance: Importance.high,
-        priority: Priority.high,
-      ),
-    ),
+  
+  // Show enhanced notification
+  String? locationInfo;
+  if (log.lat != null && log.lng != null) {
+    locationInfo = 'Location: ${log.lat!.toStringAsFixed(4)}, ${log.lng!.toStringAsFixed(4)}';
+  }
+  
+  await _notificationService.showSOSTriggered(
+    contactCount: contacts.length,
+    locationInfo: locationInfo,
   );
 
   _router.go('/sos', extra: log);
 }
 
-Future<void> _initLocalNotifications() async {
-  const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-  const settings = InitializationSettings(android: androidSettings);
-  await _localNotifications.initialize(settings);
+void _handleNotificationTap(dynamic response) {
+  // Handle notification taps - navigate to appropriate screen
+  if (response.actionId == 'cancel_sos') {
+    // User tapped "I'm Safe" action - will be handled in SOS screen
+  } else {
+    // Navigate to home screen on notification tap
+    _router.go('/home');
+  }
+}
+
+bool _wasConnected = false;
+
+void _handleConnectionChange(bool isConnected) async {
+  final pairedDevice = await _storageService.getPairedDevice();
+  final deviceName = pairedDevice?.name ?? 'SOS Keychain';
+  
+  if (isConnected && !_wasConnected) {
+    await _notificationService.showDeviceConnected(deviceName);
+  } else if (!isConnected && _wasConnected) {
+    await _notificationService.showDeviceDisconnected(deviceName);
+  }
+  _wasConnected = isConnected;
 }
 
 void initForegroundTask() {
   FlutterForegroundTask.init(
     androidNotificationOptions: AndroidNotificationOptions(
-      channelId: 'sos_keychain',
-      channelName: 'SOS Keychain',
-      channelDescription: 'SOS Keychain active — protecting you',
+      channelId: 'safeher_protection',
+      channelName: 'SafeHer Protection',
+      channelDescription: 'SafeHer is active — protecting you',
       channelImportance: NotificationChannelImportance.LOW,
       priority: NotificationPriority.LOW,
     ),
@@ -127,18 +173,16 @@ void initForegroundTask() {
   );
 }
 
-class SOSKeychainApp extends StatelessWidget {
-  const SOSKeychainApp({super.key});
+class SafeHerApp extends StatelessWidget {
+  const SafeHerApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'SOS Keychain Companion',
+      title: 'SafeHer',
+      debugShowCheckedModeBanner: false,
       routerConfig: _router,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.redAccent),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme,
     );
   }
 }

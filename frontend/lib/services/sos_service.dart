@@ -1,8 +1,8 @@
-import 'package:dt/models/emergency_contact.dart';
-import 'package:dt/models/sos_log.dart';
-import 'package:dt/services/location_service.dart';
-import 'package:dt/services/messaging_service.dart';
-import 'package:dt/services/storage_service.dart';
+import 'package:safeher/models/emergency_contact.dart';
+import 'package:safeher/models/sos_log.dart';
+import 'package:safeher/services/location_service.dart';
+import 'package:safeher/services/messaging_service.dart';
+import 'package:safeher/services/storage_service.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:uuid/uuid.dart';
 
@@ -33,11 +33,11 @@ class SOSService {
         'This is an automated emergency alert.\n'
         'Location: $mapsLink\n'
         'Time: ${DateTime.now().toLocal()}\n'
-        '— Sent from SOS Keychain app';
+        '— Sent from SafeHer app';
 
-    final smsMessage = 'SOS ALERT. Need help immediately. '
+    final smsMessage = 'SOS ALERT! Need help immediately. '
       'Location: $mapsLink '
-      'Time: ${DateTime.now().toLocal()}';
+      'Time: ${DateTime.now().toLocal()} - SafeHer';
 
     final List<EmergencyContact> contacts = await _storageService.getContacts();
     final List<String> notified = [];
