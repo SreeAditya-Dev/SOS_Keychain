@@ -39,6 +39,33 @@ class MyServerCallbacks: public BLEServerCallbacks {
     }
 };
 
+// --- BLE Characteristic Callbacks to handle writes from app ---
+class MyCharacteristicCallbacks: public BLECharacteristicCallbacks {
+    void onWrite(BLECharacteristic *pCharacteristic) {
+      std::string value = pCharacteristic->getValue();
+      
+      if (value.length() > 0) {
+        Serial.print("Received from app: ");
+        Serial.println(value.c_str());
+        
+        // Handle CANCEL_SOS command from app
+        if (value == "CANCEL_SOS") {
+          if (isSOSActive) {
+            isSOSActive = false;
+            digitalWrite(ledPin, LOW);
+            noTone(buzzerPin);
+            digitalWrite(buzzerPin, LOW);
+            Serial.println("SOS Cancelled via App Command.");
+            
+            // Notify app that SOS was cancelled
+            pCharacteristic->setValue("SOS_CANCELLED");
+            pCharacteristic->notify();
+          }
+        }
+      }
+    }
+};
+
 void setup() {
   Serial.begin(115200);
 
@@ -54,12 +81,16 @@ void setup() {
 
   BLEService *pService = pServer->createService(SERVICE_UUID);
 
-  // Create characteristic with Notify property
+  // Create characteristic with Read, Write, and Notify properties
   pCharacteristic = pService->createCharacteristic(
                       CHARACTERISTIC_UUID,
                       BLECharacteristic::PROPERTY_READ   |
+                      BLECharacteristic::PROPERTY_WRITE  |
                       BLECharacteristic::PROPERTY_NOTIFY
                     );
+
+  // Set the callback to handle writes from app
+  pCharacteristic->setCallbacks(new MyCharacteristicCallbacks());
 
   // Required for notifications to work in apps like nRF Connect
   pCharacteristic->addDescriptor(new BLE2902());
