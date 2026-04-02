@@ -443,13 +443,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             width: 60,
                             height: 60,
                             decoration: BoxDecoration(
-                              color: AppTheme.primaryColor,
                               borderRadius: BorderRadius.circular(15),
                             ),
-                            child: Icon(
-                              Icons.shield_rounded,
-                              color: AppTheme.textOnGold,
-                              size: 32,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(15),
+                              child: Image.asset(
+                                'assets/icons/safeher_logo.png',
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 12),

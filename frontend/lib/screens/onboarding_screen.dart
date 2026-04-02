@@ -266,13 +266,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             width: 140,
             height: 140,
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor,
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.shield_rounded,
-              size: 70,
-              color: AppTheme.textOnGold,
+            child: ClipOval(
+              child: Image.asset(
+                'assets/icons/safeher_logo.png',
+                fit: BoxFit.cover,
+              ),
             ),
           ),
           const SizedBox(height: 40),
