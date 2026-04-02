@@ -42,11 +42,11 @@ class MyServerCallbacks: public BLEServerCallbacks {
 // --- BLE Characteristic Callbacks to handle writes from app ---
 class MyCharacteristicCallbacks: public BLECharacteristicCallbacks {
     void onWrite(BLECharacteristic *pCharacteristic) {
-      std::string value = pCharacteristic->getValue();
+      String value = pCharacteristic->getValue();
       
       if (value.length() > 0) {
         Serial.print("Received from app: ");
-        Serial.println(value.c_str());
+        Serial.println(value);
         
         // Handle CANCEL_SOS command from app
         if (value == "CANCEL_SOS") {
