@@ -94,12 +94,21 @@ Future<void> main() async {
   final pairedDevice = await _storageService.getPairedDevice();
 
   _router = _buildRouter(onboardingDone: onboardingDone);
-  await _bleService.init(pairedDevice?.id, _handleSOSTrigger);
   
-  // Listen for connection changes to show notifications
-  _bleService.connectionStream.listen(_handleConnectionChange);
-
+  // Run the app first, then init BLE in background
   runApp(const SafeHerApp());
+  
+  // Initialize BLE and start foreground service if device is paired
+  Future.microtask(() async {
+    await _bleService.init(pairedDevice?.id, _handleSOSTrigger);
+    // Listen for connection changes to show notifications
+    _bleService.connectionStream.listen(_handleConnectionChange);
+    
+    // Start foreground service if device is paired to keep app alive
+    if (pairedDevice != null) {
+      await _startForegroundService();
+    }
+  });
 }
 
 GoRouter _buildRouter({required bool onboardingDone}) {
@@ -201,10 +210,55 @@ void _handleConnectionChange(bool isConnected) async {
   
   if (isConnected && !_wasConnected) {
     await _notificationService.showDeviceConnected(deviceName);
+    // Start foreground service when connected to keep app alive
+    _startForegroundService();
   } else if (!isConnected && _wasConnected) {
     await _notificationService.showDeviceDisconnected(deviceName);
   }
   _wasConnected = isConnected;
+}
+
+Future<void> _startForegroundService() async {
+  // Check if service is already running
+  if (await FlutterForegroundTask.isRunningService) {
+    return;
+  }
+  
+  await FlutterForegroundTask.startService(
+    notificationTitle: 'SafeHer Active',
+    notificationText: 'Your SOS keychain is connected and monitoring',
+    callback: _foregroundTaskCallback,
+  );
+}
+
+Future<void> _stopForegroundService() async {
+  await FlutterForegroundTask.stopService();
+}
+
+// This callback runs in background
+@pragma('vm:entry-point')
+void _foregroundTaskCallback() {
+  FlutterForegroundTask.setTaskHandler(_SafeHerTaskHandler());
+}
+
+class _SafeHerTaskHandler extends TaskHandler {
+  @override
+  Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
+    print('Foreground service started');
+  }
+
+  @override
+  void onRepeatEvent(DateTime timestamp) {
+    // This runs every 15 seconds (as configured in initForegroundTask)
+    // The BLE service auto-reconnect handles reconnection
+    // This just keeps the app alive in background
+    print('Background check: ${DateTime.now()}');
+  }
+
+  @override
+  Future<void> onDestroy(DateTime timestamp) async {
+    print('Foreground service destroyed');
+  }
 }
 
 void initForegroundTask() {
@@ -215,12 +269,15 @@ void initForegroundTask() {
       channelDescription: 'SafeHer is active — protecting you',
       channelImportance: NotificationChannelImportance.LOW,
       priority: NotificationPriority.LOW,
+      showWhen: false,
     ),
     iosNotificationOptions: const IOSNotificationOptions(),
-    foregroundTaskOptions: const ForegroundTaskOptions(
-      interval: 15000,
-      isOnceEvent: false,
+    foregroundTaskOptions: ForegroundTaskOptions(
+      eventAction: ForegroundTaskEventAction.repeat(15000), // Check every 15 seconds
       autoRunOnBoot: true,
+      autoRunOnMyPackageReplaced: true,
+      allowWakeLock: true,
+      allowWifiLock: true,
     ),
   );
 }

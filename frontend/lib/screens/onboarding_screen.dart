@@ -266,9 +266,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             width: 140,
             height: 140,
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
-            child: ClipOval(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
               child: Image.asset(
                 'assets/icons/safeher_logo.png',
                 fit: BoxFit.cover,

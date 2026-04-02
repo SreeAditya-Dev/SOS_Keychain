@@ -102,7 +102,15 @@ class BLEService {
   String? get connectedDeviceId => _device?.remoteId.toString();
   String? get connectedDeviceName => _device?.platformName;
 
+  // Store for auto-reconnect
+  String? _savedDeviceId;
+  Future<void> Function()? _onSOSTrigger;
+  Timer? _autoReconnectTimer;
+
   Future<void> init(String? savedDeviceId, Future<void> Function() onSOSTrigger) async {
+    _savedDeviceId = savedDeviceId;
+    _onSOSTrigger = onSOSTrigger;
+    
     // Check Bluetooth state first
     final isSupported = await FlutterBluePlus.isSupported;
     if (!isSupported) {
@@ -113,9 +121,48 @@ class BLEService {
       return;
     }
 
+    // Listen for Bluetooth adapter state changes
+    FlutterBluePlus.adapterState.listen((state) {
+      if (state == BluetoothAdapterState.on && !_isConnected && _savedDeviceId != null) {
+        // Bluetooth turned on, try to reconnect
+        _startAutoReconnect();
+      }
+    });
+
     if (savedDeviceId != null) {
-      await _reconnect(savedDeviceId, onSOSTrigger);
+      _startAutoReconnect();
     }
+  }
+
+  /// Start automatic reconnection process
+  void _startAutoReconnect() {
+    if (_disposed || _isConnected || _savedDeviceId == null || _onSOSTrigger == null) return;
+    
+    // Cancel any existing timer
+    _autoReconnectTimer?.cancel();
+    
+    // Try to reconnect immediately
+    _reconnect(_savedDeviceId!, _onSOSTrigger!);
+    
+    // Set up periodic reconnection attempts every 10 seconds if not connected
+    // This allows quick reconnection when keychain comes back in range
+    _autoReconnectTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (_disposed || _isConnected) {
+        timer.cancel();
+        return;
+      }
+      
+      if (_savedDeviceId != null && _onSOSTrigger != null) {
+        print('Auto-reconnect attempt...');
+        _reconnect(_savedDeviceId!, _onSOSTrigger!);
+      }
+    });
+  }
+
+  /// Stop automatic reconnection
+  void _stopAutoReconnect() {
+    _autoReconnectTimer?.cancel();
+    _autoReconnectTimer = null;
   }
 
   /// Check if Bluetooth is ready
@@ -202,7 +249,13 @@ class BLEService {
     Future<void> Function() onSOSTrigger,
   ) async {
     await stopScan();
+    _stopAutoReconnect(); // Stop any existing auto-reconnect
     _reconnectAttempts = 0; // Reset reconnect attempts on manual connect
+    
+    // Save for auto-reconnect
+    _savedDeviceId = device.remoteId.toString();
+    _onSOSTrigger = onSOSTrigger;
+    
     return await _connectToDevice(device, onSOSTrigger);
   }
 
@@ -346,30 +399,18 @@ class BLEService {
           suggestion: 'Attempting to reconnect...',
         ));
         
-        // Attempt reconnection with exponential backoff
-        if (!_disposed && _reconnectAttempts < _maxReconnectAttempts) {
-          _reconnectAttempts++;
-          final delay = Duration(seconds: 3 * _reconnectAttempts);
-          await Future.delayed(delay);
-          if (!_disposed && !_isConnected) {
-            // For reconnection, we can use autoConnect: true
-            // This allows the system to reconnect when device becomes available
-            try {
-              await device.connect(
-                autoConnect: true,
-                timeout: const Duration(seconds: 30),
-              );
-            } catch (e) {
-              // Will retry via this same listener
-              print('Reconnection attempt $_reconnectAttempts failed: $e');
-            }
-          }
+        // Start auto-reconnect when disconnected
+        if (!_disposed && _savedDeviceId != null) {
+          // Small delay before starting auto-reconnect
+          await Future.delayed(const Duration(seconds: 2));
+          _startAutoReconnect();
         }
       } else if (state == BluetoothConnectionState.connected) {
         // Handle successful reconnection
         if (!_isConnected) {
           _isConnected = true;
           _reconnectAttempts = 0;
+          _stopAutoReconnect(); // Stop auto-reconnect timer on successful connection
           _connectionController.add(true);
           
           // Re-setup notifications after reconnection
@@ -437,6 +478,9 @@ class BLEService {
   /// Force disconnect and clear all BLE state
   /// Use this when unpairing a device
   Future<void> forceDisconnect() async {
+    _stopAutoReconnect(); // Stop auto-reconnect timer
+    _savedDeviceId = null; // Clear saved device ID
+    _onSOSTrigger = null;
     _reconnectAttempts = _maxReconnectAttempts; // Prevent auto-reconnect
     _disposed = true; // Prevent any reconnection attempts
     
@@ -528,7 +572,8 @@ class BLEService {
 
       // If not found in system devices, scan for it
       print('Device not in system devices, scanning...');
-      await _scanAndReconnect(deviceId, onSOSTrigger);
+      // Don't await - let it run in background to avoid blocking
+      _scanAndReconnect(deviceId, onSOSTrigger);
     } catch (e) {
       _errorController.add(BLEError.fromException(e));
     }
@@ -538,12 +583,17 @@ class BLEService {
     String deviceId,
     Future<void> Function() onSOSTrigger,
   ) async {
+    if (_disposed) return;
+    
     try {
       await FlutterBluePlus.startScan(timeout: const Duration(seconds: 10));
       
       bool found = false;
-      await for (final results in FlutterBluePlus.scanResults) {
-        if (found || _disposed) break;
+      
+      // Use a subscription instead of await for to avoid blocking
+      _scanSubscription?.cancel();
+      _scanSubscription = FlutterBluePlus.scanResults.listen((results) async {
+        if (found || _disposed) return;
         
         for (final result in results) {
           // Match by device ID or device name
@@ -556,12 +606,15 @@ class BLEService {
             break;
           }
         }
-      }
+      });
       
-      if (!found) {
-        await FlutterBluePlus.stopScan();
-        print('Device not found during scan');
-      }
+      // Stop scan after timeout if not found
+      Future.delayed(const Duration(seconds: 12), () async {
+        if (!found && !_disposed) {
+          await FlutterBluePlus.stopScan();
+          print('Scan timeout - device not found');
+        }
+      });
     } catch (e) {
       await FlutterBluePlus.stopScan();
       _errorController.add(BLEError.fromException(e));
@@ -570,6 +623,7 @@ class BLEService {
 
   Future<void> dispose() async {
     _disposed = true;
+    _stopAutoReconnect(); // Stop auto-reconnect timer
     await _scanSubscription?.cancel();
     await _notifSubscription?.cancel();
     await _connectionSubscription?.cancel();
