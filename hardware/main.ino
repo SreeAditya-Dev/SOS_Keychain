@@ -7,7 +7,7 @@
 const int buzzerPin = 4;
 const int buttonSOS = 15;   // Button 1: Hold 2 sec to trigger SOS
 const int buttonCtrl = 5;   // Button 2: Stop alarm / Reset BLE
-const int ledPin = 16;       // LED indicator
+const int ledPin = 2;       // LED indicator
 
 // --- BLE UUIDs ---
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
