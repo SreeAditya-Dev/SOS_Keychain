@@ -276,11 +276,6 @@ void initForegroundTask() {
       priority: NotificationPriority.DEFAULT,
       showWhen: false,
       visibility: NotificationVisibility.VISIBILITY_PUBLIC,
-      iconData: const NotificationIconData(
-        resType: ResourceType.mipmap,
-        resPrefix: ResourcePrefix.ic,
-        name: 'launcher',
-      ),
     ),
     iosNotificationOptions: const IOSNotificationOptions(),
     foregroundTaskOptions: const ForegroundTaskOptions(
