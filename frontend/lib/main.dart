@@ -17,7 +17,10 @@ import 'package:safeher/services/storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
+import 'package:flutter_foreground_task/models/notification_visibility.dart' as fft;
 import 'package:go_router/go_router.dart';
+import 'package:workmanager/workmanager.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 final _storageService = StorageService.instance;
 final _bleService = BLEService();
@@ -81,11 +84,28 @@ class ThemeNotifier extends ChangeNotifier {
 
 final themeNotifier = ThemeNotifier();
 
+// WorkManager callback - runs in background even if app is killed
+@pragma('vm:entry-point')
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) {
+    debugPrint('🔄 WorkManager task executing: $task');
+    // The native KeepAliveWorker will restart the service
+    // This callback ensures WorkManager is registered
+    return Future.value(true);
+  });
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Load saved theme preference
   await themeNotifier.loadFromStorage();
+
+  // Initialize WorkManager for background task management
+  await Workmanager().initialize(
+    callbackDispatcher,
+    isInDebugMode: kDebugMode,
+  );
 
   initForegroundTask();
   await _notificationService.initialize(
@@ -110,6 +130,8 @@ Future<void> main() async {
     // Start foreground service if device is paired to keep app alive
     if (pairedDevice != null) {
       await _startForegroundService();
+      await _startNativeKeepAliveService();
+      await _schedulePeriodicKeepAlive();
     }
   });
 }
@@ -180,7 +202,49 @@ GoRouter _buildRouter({required bool onboardingDone}) {
 // Store last SOS log for notification tap handling
 SOSLog? _lastSOSLog;
 
+// Method channel for native KeepAlive service
+const _keepAliveChannel = MethodChannel('com.safeher.app/lifecycle');
+
+/// Start the native KeepAlive service (survives app death)
+Future<void> _startNativeKeepAliveService() async {
+  try {
+    await _keepAliveChannel.invokeMethod('startKeepAliveService');
+    debugPrint('✅ Native KeepAlive service started');
+  } catch (e) {
+    debugPrint('❌ Failed to start native KeepAlive service: $e');
+  }
+}
+
+/// Schedule periodic WorkManager task to ensure service stays alive
+Future<void> _schedulePeriodicKeepAlive() async {
+  try {
+    await Workmanager().registerPeriodicTask(
+      'keepalive-check',
+      'keepAliveCheck',
+      frequency: const Duration(minutes: 15), // Minimum interval allowed by Android
+      constraints: Constraints(
+        networkType: NetworkType.notRequired,
+        requiresBatteryNotLow: false,
+        requiresCharging: false,
+        requiresDeviceIdle: false,
+        requiresStorageNotLow: false,
+      ),
+    );
+    debugPrint('✅ WorkManager periodic task scheduled');
+  } catch (e) {
+    debugPrint('❌ Failed to schedule WorkManager task: $e');
+  }
+}
+
 Future<void> _handleSOSTrigger() async {
+  // Enable WakeLock to keep device awake during SOS trigger
+  try {
+    await WakelockPlus.enable();
+    debugPrint('🔒 WakeLock enabled for SOS trigger');
+  } catch (e) {
+    debugPrint('⚠️ Failed to enable WakeLock: $e');
+  }
+  
   final contacts = await _storageService.getContacts();
   final log = await _sosService.triggerSOS();
   
@@ -200,6 +264,16 @@ Future<void> _handleSOSTrigger() async {
   );
 
   _router.go('/sos', extra: log);
+  
+  // Keep WakeLock active for 30 seconds during SOS
+  Future.delayed(const Duration(seconds: 30), () async {
+    try {
+      await WakelockPlus.disable();
+      debugPrint('🔓 WakeLock disabled after SOS');
+    } catch (e) {
+      debugPrint('⚠️ Failed to disable WakeLock: $e');
+    }
+  });
 }
 
 void _handleNotificationTap(NotificationResponse response) async {
@@ -314,7 +388,7 @@ void initForegroundTask() {
       channelImportance: NotificationChannelImportance.DEFAULT,
       priority: NotificationPriority.DEFAULT,
       showWhen: false,
-      visibility: NotificationVisibility.VISIBILITY_PUBLIC,
+      visibility: fft.NotificationVisibility.VISIBILITY_PUBLIC,
     ),
     iosNotificationOptions: const IOSNotificationOptions(),
     foregroundTaskOptions: const ForegroundTaskOptions(

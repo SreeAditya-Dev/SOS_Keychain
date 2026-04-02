@@ -42,6 +42,8 @@ dependencies:
   permission_handler: ^11.3.0
   flutter_native_splash: ^2.4.4
   intl: ^0.19.0
+  workmanager: ^0.9.0
+  wakelock_plus: ^1.2.0
 
 dev_dependencies:
   flutter_test:
