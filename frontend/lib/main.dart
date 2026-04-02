@@ -1,4 +1,6 @@
 import 'dart:isolate';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:safeher/constants/app_theme.dart';
 import 'package:safeher/models/sos_log.dart';
 import 'package:safeher/screens/contacts_screen.dart';
@@ -175,11 +177,17 @@ GoRouter _buildRouter({required bool onboardingDone}) {
   );
 }
 
+// Store last SOS log for notification tap handling
+SOSLog? _lastSOSLog;
+
 Future<void> _handleSOSTrigger() async {
   final contacts = await _storageService.getContacts();
   final log = await _sosService.triggerSOS();
   
-  // Show enhanced notification
+  // Store for notification tap
+  _lastSOSLog = log;
+  
+  // Show enhanced notification with SOS log ID
   String? locationInfo;
   if (log.lat != null && log.lng != null) {
     locationInfo = 'Location: ${log.lat!.toStringAsFixed(4)}, ${log.lng!.toStringAsFixed(4)}';
@@ -188,17 +196,41 @@ Future<void> _handleSOSTrigger() async {
   await _notificationService.showSOSTriggered(
     contactCount: contacts.length,
     locationInfo: locationInfo,
+    sosLogId: log.id, // Pass the SOS log ID
   );
 
   _router.go('/sos', extra: log);
 }
 
-void _handleNotificationTap(dynamic response) {
-  // Handle notification taps - navigate to appropriate screen
+void _handleNotificationTap(NotificationResponse response) async {
+  debugPrint('📱 Notification tapped: action=${response.actionId}, payload=${response.payload}');
+  
+  // Handle "I'm Safe" action
   if (response.actionId == 'cancel_sos') {
-    // User tapped "I'm Safe" action - will be handled in SOS screen
+    if (_lastSOSLog != null) {
+      await _sosService.cancelSOS(_lastSOSLog!);
+      await _notificationService.showSOSCancelled();
+      _lastSOSLog = null;
+    }
+    _router.go('/home');
+    return;
+  }
+  
+  // Handle notification tap or "View SOS" action
+  if (_lastSOSLog != null && !(_lastSOSLog!.wasCancelled)) {
+    // Navigate to SOS screen with the log
+    _router.go('/sos', extra: _lastSOSLog);
+  } else if (response.payload != null && response.payload!.isNotEmpty) {
+    // Try to load SOS log from storage using payload ID
+    final logs = await _storageService.getSOSLogs();
+    final log = logs.where((l) => l.id == response.payload).firstOrNull;
+    if (log != null && !log.wasCancelled) {
+      _router.go('/sos', extra: log);
+      return;
+    }
+    _router.go('/home');
   } else {
-    // Navigate to home screen on notification tap
+    // No active SOS, navigate to home
     _router.go('/home');
   }
 }
@@ -225,9 +257,16 @@ Future<void> _startForegroundService() async {
     return;
   }
   
-  // Request battery optimization exemption for reliable background operation
-  // This allows the app to work like Google Fit - even after swipe away
-  await FlutterForegroundTask.requestIgnoreBatteryOptimization();
+  // Check if battery optimization is already disabled before requesting
+  final isBatteryOptimizationDisabled = await FlutterForegroundTask.isIgnoringBatteryOptimizations;
+  
+  if (!isBatteryOptimizationDisabled) {
+    // Only request if not already granted
+    debugPrint('📋 Requesting battery optimization exemption...');
+    await FlutterForegroundTask.requestIgnoreBatteryOptimization();
+  } else {
+    debugPrint('✅ Battery optimization already disabled');
+  }
   
   await FlutterForegroundTask.startService(
     notificationTitle: 'SafeHer Active',
@@ -301,8 +340,7 @@ class _SafeHerAppState extends State<SafeHerApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Request battery optimization exemption
-    FlutterForegroundTask.requestIgnoreBatteryOptimization();
+    // Don't request here - it's requested when foreground service starts
   }
 
   @override
@@ -313,7 +351,7 @@ class _SafeHerAppState extends State<SafeHerApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    print('App lifecycle state: $state');
+    debugPrint('App lifecycle state: $state');
     // When app goes to background, the foreground service keeps it alive
     // BLE service continues to run and trigger SOS when button is pressed
   }

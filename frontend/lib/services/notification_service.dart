@@ -116,6 +116,7 @@ class NotificationService {
   Future<void> showSOSTriggered({
     required int contactCount,
     String? locationInfo,
+    String? sosLogId,
   }) async {
     final body = contactCount > 0
         ? 'Emergency alert sent to $contactCount contact${contactCount > 1 ? 's' : ''}. '
@@ -147,6 +148,11 @@ class NotificationService {
               'I\'m Safe',
               showsUserInterface: true,
             ),
+            const AndroidNotificationAction(
+              'view_sos',
+              'View SOS',
+              showsUserInterface: true,
+            ),
           ],
         ),
         iOS: const DarwinNotificationDetails(
@@ -156,6 +162,7 @@ class NotificationService {
           interruptionLevel: InterruptionLevel.critical,
         ),
       ),
+      payload: sosLogId, // Pass SOS log ID for navigation
     );
   }
 
