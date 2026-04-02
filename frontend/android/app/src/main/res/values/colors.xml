@@ -3,5 +3,5 @@
     <!-- SafeHer Primary Color (Coral Red) -->
     <color name="splash_background">#E8505B</color>
     <color name="primary_color">#E8505B</color>
-	<color name="ic_launcher_background">#E8505B</color>
+	<color name="ic_launcher_background">#FFFFFF</color>
 </resources>
