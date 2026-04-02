@@ -276,10 +276,16 @@ void initForegroundTask() {
       priority: NotificationPriority.DEFAULT,
       showWhen: false,
       visibility: NotificationVisibility.VISIBILITY_PUBLIC,
+      iconData: const NotificationIconData(
+        resType: ResourceType.mipmap,
+        resPrefix: ResourcePrefix.ic,
+        name: 'launcher',
+      ),
     ),
     iosNotificationOptions: const IOSNotificationOptions(),
     foregroundTaskOptions: const ForegroundTaskOptions(
-      interval: 15000, // Check every 15 seconds
+      interval: 5000, // Check every 5 seconds
+      isOnceEvent: false,
       autoRunOnBoot: true,
       autoRunOnMyPackageReplaced: true,
       allowWakeLock: true,
@@ -288,23 +294,52 @@ void initForegroundTask() {
   );
 }
 
-class SafeHerApp extends StatelessWidget {
+class SafeHerApp extends StatefulWidget {
   const SafeHerApp({super.key});
 
   @override
+  State<SafeHerApp> createState() => _SafeHerAppState();
+}
+
+class _SafeHerAppState extends State<SafeHerApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Request battery optimization exemption
+    FlutterForegroundTask.requestIgnoreBatteryOptimization();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    print('App lifecycle state: $state');
+    // When app goes to background, the foreground service keeps it alive
+    // BLE service continues to run and trigger SOS when button is pressed
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: themeNotifier,
-      builder: (context, child) {
-        return MaterialApp.router(
-          title: 'SafeHer',
-          debugShowCheckedModeBanner: false,
-          routerConfig: _router,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: themeNotifier.themeMode,
-        );
-      },
+    // WithForegroundTask keeps the Dart VM alive even when UI is minimized
+    return WithForegroundTask(
+      child: ListenableBuilder(
+        listenable: themeNotifier,
+        builder: (context, child) {
+          return MaterialApp.router(
+            title: 'SafeHer',
+            debugShowCheckedModeBanner: false,
+            routerConfig: _router,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeNotifier.themeMode,
+          );
+        },
+      ),
     );
   }
 }

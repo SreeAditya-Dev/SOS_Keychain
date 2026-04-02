@@ -21,46 +21,72 @@ class SOSService {
   final StorageService _storageService;
 
   Future<SOSLog> triggerSOS() async {
+    debugPrint('🚨 SOS Triggered - Starting location fetch...');
+    
     // Get location with longer timeout for better accuracy
     Position? position;
     try {
       position = await _locationService.getLocation().timeout(
-        const Duration(seconds: 20),
+        const Duration(seconds: 25), // Increased timeout
         onTimeout: () {
-          debugPrint('Location timeout - proceeding without location');
+          debugPrint('⚠️ Location timeout after 25 seconds - proceeding without location');
           return null;
         },
       );
+      
+      if (position != null) {
+        debugPrint('✅ Location obtained: ${position.latitude}, ${position.longitude}');
+        debugPrint('📍 Accuracy: ${position.accuracy}m');
+      } else {
+        debugPrint('❌ No location available');
+      }
     } catch (e) {
-      debugPrint('Error getting location: $e');
+      debugPrint('❌ Error getting location: $e');
+      position = null;
     }
 
+    // Create Google Maps link with proper formatting
     final mapsLink = position != null
-        ? 'https://maps.google.com/?q=${position.latitude},${position.longitude}'
+        ? 'https://www.google.com/maps/search/?api=1&query=${position.latitude},${position.longitude}'
         : 'Location unavailable';
 
-    final whatsappMessage = '🚨 SOS ALERT\n'
-        'This is an automated emergency alert.\n'
-        'Location: $mapsLink\n'
-        'Time: ${DateTime.now().toLocal()}\n'
+    debugPrint('🗺️ Maps link: $mapsLink');
+
+    final now = DateTime.now();
+    final timeString = '${now.day}/${now.month}/${now.year} ${now.hour}:${now.minute.toString().padLeft(2, '0')}';
+
+    final whatsappMessage = '🚨 *SOS ALERT*\n\n'
+        'This is an *automated emergency alert*.\n\n'
+        '📍 Location: $mapsLink\n'
+        '🕐 Time: $timeString\n\n'
         '— Sent from SafeHer app';
 
     final smsMessage = 'SOS ALERT! Need help immediately. '
       'Location: $mapsLink '
-      'Time: ${DateTime.now().toLocal()} - SafeHer';
+      'Time: $timeString - SafeHer';
 
+    debugPrint('📱 Sending alerts to contacts...');
     final List<EmergencyContact> contacts = await _storageService.getContacts();
     final List<String> notified = [];
 
     for (final contact in contacts) {
-      if (contact.sendSMS) {
-        await _messagingService.sendSMS(contact.phone, smsMessage);
+      debugPrint('Sending to ${contact.name} (${contact.phone})...');
+      try {
+        if (contact.sendSMS) {
+          await _messagingService.sendSMS(contact.phone, smsMessage);
+          debugPrint('✅ SMS sent to ${contact.name}');
+        }
+        if (contact.sendWhatsApp) {
+          await _messagingService.sendWhatsApp(contact.phone, whatsappMessage);
+          debugPrint('✅ WhatsApp sent to ${contact.name}');
+        }
+        notified.add(contact.name);
+      } catch (e) {
+        debugPrint('❌ Error sending to ${contact.name}: $e');
       }
-      if (contact.sendWhatsApp) {
-        await _messagingService.sendWhatsApp(contact.phone, whatsappMessage);
-      }
-      notified.add(contact.name);
     }
+
+    debugPrint('✅ SOS alerts sent to ${notified.length} contacts');
 
     final log = SOSLog(
       id: const Uuid().v4(),

@@ -10,6 +10,17 @@ class LocationService {
         debugPrint('Location services are disabled');
         // Try to open location settings
         await Geolocator.openLocationSettings();
+        
+        // Try to get last known position as fallback
+        try {
+          final lastPosition = await Geolocator.getLastKnownPosition();
+          if (lastPosition != null) {
+            debugPrint('Using last known position: ${lastPosition.latitude}, ${lastPosition.longitude}');
+            return lastPosition;
+          }
+        } catch (e) {
+          debugPrint('Error getting last known position: $e');
+        }
         return null;
       }
 
@@ -22,26 +33,77 @@ class LocationService {
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
         debugPrint('Location permissions denied: $permission');
+        
+        // Try to get last known position even if permission is denied
+        try {
+          final lastPosition = await Geolocator.getLastKnownPosition();
+          if (lastPosition != null) {
+            debugPrint('Using last known position (permission denied): ${lastPosition.latitude}, ${lastPosition.longitude}');
+            return lastPosition;
+          }
+        } catch (e) {
+          debugPrint('Error getting last known position: $e');
+        }
         return null;
       }
 
-      // Try to get the last known position first (faster)
-      Position? lastPosition = await Geolocator.getLastKnownPosition();
+      // Get last known position first (faster fallback)
+      Position? lastPosition;
+      try {
+        lastPosition = await Geolocator.getLastKnownPosition();
+        if (lastPosition != null) {
+          debugPrint('Last known position available: ${lastPosition.latitude}, ${lastPosition.longitude}');
+        }
+      } catch (e) {
+        debugPrint('Error getting last known position: $e');
+      }
       
-      // Get current position with high accuracy
-      // Use a longer timeout for better accuracy
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 15),
-      ).catchError((e) {
+      // Try to get current position with high accuracy
+      try {
+        final position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 20),
+        );
+        
+        debugPrint('Current location obtained: ${position.latitude}, ${position.longitude}');
+        return position;
+      } catch (e) {
         debugPrint('Error getting current position: $e');
-        return lastPosition ?? Future.error(e);
-      });
-
-      debugPrint('Location obtained: ${position.latitude}, ${position.longitude}');
-      return position;
+        
+        // Fall back to last known position if available
+        if (lastPosition != null) {
+          debugPrint('Falling back to last known position: ${lastPosition.latitude}, ${lastPosition.longitude}');
+          return lastPosition;
+        }
+        
+        // Last resort: try one more time with lower accuracy
+        try {
+          debugPrint('Attempting to get location with lower accuracy...');
+          final position = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.medium,
+            timeLimit: const Duration(seconds: 10),
+          );
+          debugPrint('Location obtained with medium accuracy: ${position.latitude}, ${position.longitude}');
+          return position;
+        } catch (e2) {
+          debugPrint('Failed to get location with medium accuracy: $e2');
+          return null;
+        }
+      }
     } catch (e) {
       debugPrint('Location service error: $e');
+      
+      // Final fallback attempt
+      try {
+        final lastPosition = await Geolocator.getLastKnownPosition();
+        if (lastPosition != null) {
+          debugPrint('Using last known position (final fallback): ${lastPosition.latitude}, ${lastPosition.longitude}');
+          return lastPosition;
+        }
+      } catch (e2) {
+        debugPrint('Final fallback failed: $e2');
+      }
+      
       return null;
     }
   }

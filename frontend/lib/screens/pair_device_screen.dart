@@ -374,107 +374,161 @@ class _PairDeviceScreenState extends State<PairDeviceScreen>
               ),
             ),
 
-            // Scan button area
+            // Scan button area with gradient background
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 20),
-              padding: const EdgeInsets.all(28),
+              padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor,
-                borderRadius: BorderRadius.circular(AppTheme.radiusXLarge),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppTheme.primaryColor,
+                    AppTheme.primaryColor.withOpacity(0.85),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withOpacity(0.3),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
               ),
               child: Column(
                 children: [
-                  // Animated scanning icon
+                  // Animated scanning icon with ripple effect
                   AnimatedBuilder(
                     animation: _scanAnimationController,
                     builder: (context, child) {
                       return Stack(
                         alignment: Alignment.center,
                         children: [
+                          // Outer ripple
                           if (_isScanning) ...[
                             Container(
-                              width: 100 + (_scanAnimationController.value * 30),
-                              height: 100 + (_scanAnimationController.value * 30),
+                              width: 120 + (_scanAnimationController.value * 40),
+                              height: 120 + (_scanAnimationController.value * 40),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: AppTheme.textOnGold.withValues(alpha: 0.2 * (1 - _scanAnimationController.value)),
-                                  width: 2,
+                                  color: Colors.white.withOpacity(
+                                    0.3 * (1 - _scanAnimationController.value),
+                                  ),
+                                  width: 3,
                                 ),
                               ),
                             ),
+                            // Middle ripple
                             Container(
-                              width: 80 + (_scanAnimationController.value * 15),
-                              height: 80 + (_scanAnimationController.value * 15),
+                              width: 100 + (_scanAnimationController.value * 25),
+                              height: 100 + (_scanAnimationController.value * 25),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: AppTheme.textOnGold.withValues(alpha: 0.3 * (1 - _scanAnimationController.value)),
+                                  color: Colors.white.withOpacity(
+                                    0.5 * (1 - _scanAnimationController.value),
+                                  ),
                                   width: 2,
                                 ),
                               ),
                             ),
                           ],
+                          // Center icon with glow
                           Container(
-                            width: 70,
-                            height: 70,
+                            width: 90,
+                            height: 90,
                             decoration: BoxDecoration(
-                              color: AppTheme.textOnGold.withValues(alpha: 0.15),
+                              color: Colors.white.withOpacity(0.2),
                               shape: BoxShape.circle,
+                              boxShadow: _isScanning
+                                  ? [
+                                      BoxShadow(
+                                        color: Colors.white.withOpacity(0.3),
+                                        blurRadius: 20,
+                                        spreadRadius: 5,
+                                      ),
+                                    ]
+                                  : null,
                             ),
                             child: Icon(
                               _isScanning
                                   ? Icons.bluetooth_searching_rounded
                                   : Icons.bluetooth_rounded,
-                              color: AppTheme.textOnGold,
-                              size: 32,
+                              color: Colors.white,
+                              size: 40,
                             ),
                           ),
                         ],
                       );
                     },
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
                   Text(
-                    _isScanning ? 'Scanning for devices...' : 'Ready to Scan',
-                    style: TextStyle(
-                      color: AppTheme.textOnGold,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
+                    _isScanning ? 'Scanning for Devices' : 'Ready to Scan',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Text(
                     _isScanning
-                        ? 'Make sure your keychain is powered on'
+                        ? 'Keep your keychain nearby and powered on'
                         : 'Looking for "${BLEConstants.deviceName}"',
                     style: TextStyle(
-                      color: AppTheme.textOnGold.withValues(alpha: 0.8),
-                      fontSize: 13,
+                      color: Colors.white.withOpacity(0.85),
+                      fontSize: 14,
+                      height: 1.4,
                     ),
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: 160,
+                  const SizedBox(height: 24),
+                  // Modern scan button
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
                     child: ElevatedButton(
                       onPressed: _isScanning ? _stopScan : _startScan,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isDark ? AppTheme.backgroundDark : Colors.white,
+                        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                         foregroundColor: AppTheme.primaryDark,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            _isScanning ? Icons.stop_rounded : Icons.search_rounded,
-                            size: 20,
+                            _isScanning ? Icons.stop_circle_rounded : Icons.radar_rounded,
+                            size: 22,
                           ),
-                          const SizedBox(width: 8),
-                          Text(_isScanning ? 'Stop Scan' : 'Start Scan'),
+                          const SizedBox(width: 10),
+                          Text(
+                            _isScanning ? 'Stop Scan' : 'Start Scan',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -537,30 +591,68 @@ class _PairDeviceScreenState extends State<PairDeviceScreen>
 
   Widget _buildEmptyState(bool isDark) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.bluetooth_disabled_rounded,
-            size: 56,
-            color: isDark ? AppTheme.textMutedDark : AppTheme.textMuted,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            _isScanning ? 'Searching...' : 'No devices found',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Animated icon container
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: (isDark ? AppTheme.primaryColor : AppTheme.primaryColor).withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: (isDark ? AppTheme.primaryColor : AppTheme.primaryColor).withOpacity(0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _isScanning 
+                      ? Icons.bluetooth_searching_rounded
+                      : Icons.bluetooth_disabled_rounded,
+                    size: 44,
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _isScanning
-                ? 'Please wait while we scan for your keychain'
-                : 'Tap "Start Scan" to find your SOS keychain',
-            style: Theme.of(context).textTheme.bodySmall,
-            textAlign: TextAlign.center,
-          ),
-        ],
+            const SizedBox(height: 28),
+            Text(
+              _isScanning ? 'Searching...' : 'No Devices Found',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _isScanning
+                  ? 'Please wait while we scan for your keychain.\nMake sure it\'s powered on and nearby.'
+                  : 'Tap "Start Scan" to find your SOS keychain.\nMake sure Bluetooth is enabled.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
+                height: 1.6,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (_isScanning) ...[
+              const SizedBox(height: 24),
+              SizedBox(
+                width: 32,
+                height: 32,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -571,47 +663,87 @@ class _PairDeviceScreenState extends State<PairDeviceScreen>
     final isConnecting = _connectingDeviceId == device.remoteId.toString();
     final signalStrength = _getSignalStrength(result.rssi);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: isSOSDevice
-            ? (isDark ? AppTheme.subtleGoldDark : AppTheme.subtleGold)
-            : (isDark ? AppTheme.cardDark : AppTheme.cardLight),
-        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+        gradient: isSOSDevice
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppTheme.primaryColor.withOpacity(isDark ? 0.15 : 0.08),
+                  AppTheme.primaryColor.withOpacity(isDark ? 0.08 : 0.12),
+                ],
+              )
+            : null,
+        color: !isSOSDevice
+            ? (isDark ? AppTheme.cardDark : AppTheme.cardLight)
+            : null,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isSOSDevice
-              ? AppTheme.primaryColor.withValues(alpha: 0.3)
+              ? AppTheme.primaryColor.withOpacity(0.4)
               : (isDark ? AppTheme.borderDark : AppTheme.borderLight),
+          width: isSOSDevice ? 2 : 1,
         ),
+        boxShadow: isSOSDevice
+            ? [
+                BoxShadow(
+                  color: AppTheme.primaryColor.withOpacity(0.15),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: isConnecting ? null : () => _connectToDevice(device),
-          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+          borderRadius: BorderRadius.circular(20),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             child: Row(
               children: [
-                // Device icon
+                // Device icon with gradient
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 56,
+                  height: 56,
                   decoration: BoxDecoration(
-                    color: isSOSDevice
-                        ? AppTheme.primaryColor.withValues(alpha: 0.15)
-                        : (isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight),
-                    borderRadius: BorderRadius.circular(12),
+                    gradient: isSOSDevice
+                        ? LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppTheme.primaryColor,
+                              AppTheme.primaryColor.withOpacity(0.8),
+                            ],
+                          )
+                        : null,
+                    color: !isSOSDevice
+                        ? (isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight)
+                        : null,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: isSOSDevice
+                        ? [
+                            BoxShadow(
+                              color: AppTheme.primaryColor.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
                   ),
                   child: Icon(
                     isSOSDevice ? Icons.key_rounded : Icons.bluetooth_rounded,
-                    color: isSOSDevice 
-                        ? AppTheme.primaryColor 
+                    color: isSOSDevice
+                        ? Colors.white
                         : (isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary),
-                    size: 24,
+                    size: 28,
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 16),
 
                 // Device info
                 Expanded(
@@ -620,47 +752,83 @@ class _PairDeviceScreenState extends State<PairDeviceScreen>
                     children: [
                       Row(
                         children: [
-                          Text(
-                            device.platformName,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
+                          Flexible(
+                            child: Text(
+                              device.platformName,
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 17,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           if (isSOSDevice) ...[
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
+                                horizontal: 10,
+                                vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: AppTheme.primaryColor,
-                                borderRadius: BorderRadius.circular(10),
+                                gradient: LinearGradient(
+                                  colors: [
+                                    AppTheme.primaryColor,
+                                    AppTheme.primaryColor.withOpacity(0.85),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppTheme.primaryColor.withOpacity(0.3),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
-                              child: Text(
-                                'SOS',
+                              child: const Text(
+                                'RECOMMENDED',
                                 style: TextStyle(
-                                  color: AppTheme.textOnGold,
+                                  color: Colors.white,
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
                             ),
                           ],
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Row(
                         children: [
-                          Icon(
-                            signalStrength.icon,
-                            size: 14,
-                            color: signalStrength.color,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${signalStrength.label} signal',
-                            style: Theme.of(context).textTheme.bodySmall,
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: signalStrength.color.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  signalStrength.icon,
+                                  size: 14,
+                                  color: signalStrength.color,
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  signalStrength.label,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: signalStrength.color,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -668,20 +836,42 @@ class _PairDeviceScreenState extends State<PairDeviceScreen>
                   ),
                 ),
 
+                const SizedBox(width: 12),
+
                 // Connect button/indicator
                 if (isConnecting)
-                  SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                      ),
                     ),
                   )
                 else
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    color: isDark ? AppTheme.textMutedDark : AppTheme.textMuted,
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: isSOSDevice
+                          ? AppTheme.primaryColor.withOpacity(0.15)
+                          : (isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 20,
+                      color: isSOSDevice
+                          ? AppTheme.primaryColor
+                          : (isDark ? AppTheme.textMutedDark : AppTheme.textMuted),
+                    ),
                   ),
               ],
             ),
