@@ -1,3 +1,4 @@
+import 'dart:isolate';
 import 'package:safeher/constants/app_theme.dart';
 import 'package:safeher/models/sos_log.dart';
 import 'package:safeher/screens/contacts_screen.dart';
@@ -247,20 +248,20 @@ void _foregroundTaskCallback() {
 
 class _SafeHerTaskHandler extends TaskHandler {
   @override
-  Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
+  void onStart(DateTime timestamp, SendPort? sendPort) {
     print('Foreground service started');
   }
 
   @override
-  void onRepeatEvent(DateTime timestamp) {
-    // This runs every 15 seconds (as configured in initForegroundTask)
+  void onRepeatEvent(DateTime timestamp, SendPort? sendPort) {
+    // This runs every interval (as configured in initForegroundTask)
     // The BLE service auto-reconnect handles reconnection
     // This just keeps the app alive in background
     print('Background check: ${DateTime.now()}');
   }
 
   @override
-  Future<void> onDestroy(DateTime timestamp) async {
+  void onDestroy(DateTime timestamp, SendPort? sendPort) {
     print('Foreground service destroyed');
   }
 }
@@ -277,8 +278,8 @@ void initForegroundTask() {
       visibility: NotificationVisibility.VISIBILITY_PUBLIC,
     ),
     iosNotificationOptions: const IOSNotificationOptions(),
-    foregroundTaskOptions: ForegroundTaskOptions(
-      eventAction: ForegroundTaskEventAction.repeat(15000), // Check every 15 seconds
+    foregroundTaskOptions: const ForegroundTaskOptions(
+      interval: 15000, // Check every 15 seconds
       autoRunOnBoot: true,
       autoRunOnMyPackageReplaced: true,
       allowWakeLock: true,
