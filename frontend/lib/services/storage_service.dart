@@ -123,4 +123,21 @@ class StorageService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_sosLogsKey);
   }
+
+  /// Get a single setting value by key
+  Future<T?> getSetting<T>(String key) async {
+    final settings = await getSettings();
+    final value = settings[key];
+    if (value is T) {
+      return value;
+    }
+    return null;
+  }
+
+  /// Save a single setting value by key
+  Future<void> saveSetting(String key, dynamic value) async {
+    final settings = await getSettings();
+    settings[key] = value;
+    await saveSettings(settings);
+  }
 }

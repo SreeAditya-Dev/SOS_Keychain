@@ -58,9 +58,9 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icons/app_icon.png"
+  image_path: "assets/icons/safeher.png"
   adaptive_icon_background: "#E8505B"
-  adaptive_icon_foreground: "assets/icons/app_icon_foreground.png"
+  adaptive_icon_foreground: "assets/icons/safeher.png"
 
 flutter_native_splash:
   color: "#E8505B"

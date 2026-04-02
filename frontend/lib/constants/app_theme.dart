@@ -54,6 +54,25 @@ class AppTheme {
   static const Color borderLight = Color(0xFFE5E5E5);       // Light border
   static const Color borderDark = Color(0xFF3A3A3A);        // Dark border
 
+  // Gradients for backward compatibility
+  static const LinearGradient heroGradient = LinearGradient(
+    colors: [primaryColor, primaryDark],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient successGradient = LinearGradient(
+    colors: [success, Color(0xFF2DB84D)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient sosGradient = LinearGradient(
+    colors: [error, Color(0xFFE52E24)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
   // Box Shadows - Light Theme
   static List<BoxShadow> get softShadow => [
     BoxShadow(
