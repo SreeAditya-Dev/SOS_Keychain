@@ -191,8 +191,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     if (confirmed == true) {
-      // Disconnect from device
-      await widget.bleService.disconnect();
+      // Force disconnect from device (prevents auto-reconnect)
+      await widget.bleService.forceDisconnect();
+      
+      // Give ESP32 time to restart advertising
+      await Future.delayed(const Duration(milliseconds: 500));
       
       // Clear paired device from storage
       await widget.storageService.clearPairedDevice();

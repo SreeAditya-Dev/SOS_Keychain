@@ -408,14 +408,69 @@ class BLEService {
   }
 
   Future<void> disconnect() async {
+    _reconnectAttempts = _maxReconnectAttempts; // Prevent auto-reconnect
+    
     try {
-      await _device?.disconnect();
+      // Cancel subscriptions first
+      await _notifSubscription?.cancel();
+      _notifSubscription = null;
+      await _connectionSubscription?.cancel();
+      _connectionSubscription = null;
+      
+      // Disconnect the device
+      if (_device != null) {
+        await _device!.disconnect();
+        // Give the BLE stack time to clean up
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
     } catch (e) {
       // Ignore disconnect errors
+      print('Disconnect error (ignored): $e');
     }
+    
     _device = null;
     _sosChar = null;
     _isConnected = false;
+    _connectionController.add(false);
+  }
+
+  /// Force disconnect and clear all BLE state
+  /// Use this when unpairing a device
+  Future<void> forceDisconnect() async {
+    _reconnectAttempts = _maxReconnectAttempts; // Prevent auto-reconnect
+    _disposed = true; // Prevent any reconnection attempts
+    
+    try {
+      await _notifSubscription?.cancel();
+      _notifSubscription = null;
+      await _connectionSubscription?.cancel();
+      _connectionSubscription = null;
+      await _scanSubscription?.cancel();
+      _scanSubscription = null;
+      
+      if (_device != null) {
+        // Try to gracefully disconnect
+        try {
+          await _device!.disconnect();
+        } catch (e) {
+          print('Device disconnect error: $e');
+        }
+        
+        // Give time for BLE stack cleanup
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+      
+      // Stop any ongoing scans
+      await FlutterBluePlus.stopScan();
+    } catch (e) {
+      print('Force disconnect error: $e');
+    }
+    
+    _device = null;
+    _sosChar = null;
+    _isConnected = false;
+    _disposed = false; // Reset for future connections
+    _reconnectAttempts = 0;
     _connectionController.add(false);
   }
 
@@ -447,17 +502,68 @@ class BLEService {
     String deviceId,
     Future<void> Function() onSOSTrigger,
   ) async {
+    if (_disposed) return;
+    
     try {
+      // First, check if Bluetooth is ready
+      final isReady = await isBluetoothReady();
+      if (!isReady) {
+        _errorController.add(BLEError(
+          type: BLEErrorType.bluetoothOff,
+          message: 'Bluetooth is not ready',
+          suggestion: 'Please enable Bluetooth',
+        ));
+        return;
+      }
+      
+      // Try to find the device in system bonded devices first
       final systemDevices = await FlutterBluePlus.systemDevices([]);
       for (final device in systemDevices) {
         if (device.remoteId.toString() == deviceId) {
-          await _connectToDevice(device, onSOSTrigger);
-          return;
+          print('Found device in system devices, attempting connection...');
+          final success = await _connectToDevice(device, onSOSTrigger);
+          if (success) return;
         }
       }
 
-      await scanAndConnect(onSOSTrigger);
+      // If not found in system devices, scan for it
+      print('Device not in system devices, scanning...');
+      await _scanAndReconnect(deviceId, onSOSTrigger);
     } catch (e) {
+      _errorController.add(BLEError.fromException(e));
+    }
+  }
+  
+  Future<void> _scanAndReconnect(
+    String deviceId,
+    Future<void> Function() onSOSTrigger,
+  ) async {
+    try {
+      await FlutterBluePlus.startScan(timeout: const Duration(seconds: 10));
+      
+      bool found = false;
+      await for (final results in FlutterBluePlus.scanResults) {
+        if (found || _disposed) break;
+        
+        for (final result in results) {
+          // Match by device ID or device name
+          if (result.device.remoteId.toString() == deviceId ||
+              result.device.platformName == BLEConstants.deviceName) {
+            found = true;
+            await FlutterBluePlus.stopScan();
+            print('Found device via scan, connecting...');
+            await _connectToDevice(result.device, onSOSTrigger);
+            break;
+          }
+        }
+      }
+      
+      if (!found) {
+        await FlutterBluePlus.stopScan();
+        print('Device not found during scan');
+      }
+    } catch (e) {
+      await FlutterBluePlus.stopScan();
       _errorController.add(BLEError.fromException(e));
     }
   }

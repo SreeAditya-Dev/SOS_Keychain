@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:safeher/models/emergency_contact.dart';
 import 'package:safeher/models/sos_log.dart';
 import 'package:safeher/services/location_service.dart';
@@ -20,10 +21,19 @@ class SOSService {
   final StorageService _storageService;
 
   Future<SOSLog> triggerSOS() async {
-    final Position? position = await _locationService.getLocation().timeout(
-      const Duration(seconds: 10),
-      onTimeout: () => null,
-    );
+    // Get location with longer timeout for better accuracy
+    Position? position;
+    try {
+      position = await _locationService.getLocation().timeout(
+        const Duration(seconds: 20),
+        onTimeout: () {
+          debugPrint('Location timeout - proceeding without location');
+          return null;
+        },
+      );
+    } catch (e) {
+      debugPrint('Error getting location: $e');
+    }
 
     final mapsLink = position != null
         ? 'https://maps.google.com/?q=${position.latitude},${position.longitude}'

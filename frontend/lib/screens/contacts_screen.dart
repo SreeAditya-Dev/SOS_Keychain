@@ -40,6 +40,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
     bool sendSMS = existing?.sendSMS ?? true;
     bool sendWhatsApp = existing?.sendWhatsApp ?? true;
     final isEditing = existing != null;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     await showModalBottomSheet(
       context: context,
@@ -52,9 +53,9 @@ class _ContactsScreenState extends State<ContactsScreen> {
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(
+              decoration: BoxDecoration(
+                color: isDark ? AppTheme.cardDark : Colors.white,
+                borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(AppTheme.radiusXLarge),
                 ),
               ),
@@ -70,7 +71,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                         width: 40,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade300,
+                          color: isDark ? Colors.grey.shade600 : Colors.grey.shade300,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -104,7 +105,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                     Text(
                       'Name',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: AppTheme.textSecondary,
+                        color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -125,7 +126,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                     Text(
                       'Phone Number',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: AppTheme.textSecondary,
+                        color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -136,7 +137,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                         hintText: '+91 98765 43210',
                         prefixIcon: Icon(
                           Icons.phone_outlined,
-                          color: AppTheme.textMuted,
+                          color: isDark ? AppTheme.textMutedDark : AppTheme.textMuted,
                         ),
                       ),
                     ),
@@ -146,7 +147,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                     Text(
                       'Notification Methods',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: AppTheme.textSecondary,
+                        color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -158,6 +159,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                       color: AppTheme.info,
                       value: sendSMS,
                       onChanged: (v) => setLocalState(() => sendSMS = v),
+                      isDark: isDark,
                     ),
                     const SizedBox(height: 12),
                     _buildToggleOption(
@@ -167,6 +169,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                       color: const Color(0xFF25D366),
                       value: sendWhatsApp,
                       onChanged: (v) => setLocalState(() => sendWhatsApp = v),
+                      isDark: isDark,
                     ),
 
                     const SizedBox(height: 32),
@@ -223,14 +226,19 @@ class _ContactsScreenState extends State<ContactsScreen> {
     required Color color,
     required bool value,
     required ValueChanged<bool> onChanged,
+    required bool isDark,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: value ? color.withValues(alpha: 0.1) : Colors.grey.shade50,
+        color: value 
+            ? color.withValues(alpha: 0.1) 
+            : (isDark ? AppTheme.surfaceDark : Colors.grey.shade50),
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         border: Border.all(
-          color: value ? color.withValues(alpha: 0.3) : Colors.grey.shade200,
+          color: value 
+              ? color.withValues(alpha: 0.3) 
+              : (isDark ? AppTheme.borderDark : Colors.grey.shade200),
         ),
       ),
       child: Row(
@@ -254,7 +262,9 @@ class _ContactsScreenState extends State<ContactsScreen> {
                 ),
                 Text(
                   subtitle,
-                  style: Theme.of(context).textTheme.bodySmall,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -321,7 +331,10 @@ class _ContactsScreenState extends State<ContactsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
+      backgroundColor: isDark ? AppTheme.backgroundDark : AppTheme.backgroundLight,
       body: SafeArea(
         child: Column(
           children: [
@@ -330,11 +343,21 @@ class _ContactsScreenState extends State<ContactsScreen> {
               padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
-                  IconButton(
-                    onPressed: () => context.go('/home'),
-                    icon: const Icon(Icons.arrow_back_rounded),
-                    style: IconButton.styleFrom(
-                      backgroundColor: AppTheme.backgroundLight,
+                  GestureDetector(
+                    onTap: () => context.go('/home'),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.asset(
+                          'assets/icons/safeher_logo.png',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -349,7 +372,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                         Text(
                           '${_contacts.length} contacts configured',
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppTheme.textSecondary,
+                            color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondary,
                           ),
                         ),
                       ],

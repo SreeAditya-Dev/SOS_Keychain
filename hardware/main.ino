@@ -7,7 +7,7 @@
 const int buzzerPin = 4;
 const int buttonSOS = 15;   // Button 1: Hold 2 sec to trigger SOS
 const int buttonCtrl = 5;   // Button 2: Stop alarm / Reset BLE
-const int ledPin = 2;       // LED indicator
+const int ledPin = 16;       // LED indicator
 
 // --- BLE UUIDs ---
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
@@ -16,6 +16,7 @@ const int ledPin = 2;       // LED indicator
 BLEServer* pServer = NULL;
 BLECharacteristic* pCharacteristic = NULL;
 bool deviceConnected = false;
+bool oldDeviceConnected = false;
 
 // --- State Variables ---
 bool isSOSActive = false;
@@ -34,8 +35,7 @@ class MyServerCallbacks: public BLEServerCallbacks {
 
     void onDisconnect(BLEServer* pServer) {
       deviceConnected = false;
-      Serial.println("Phone Disconnected. Restarting advertising...");
-      BLEDevice::startAdvertising(); // Resume advertising so phone can reconnect
+      Serial.println("Phone Disconnected.");
     }
 };
 
@@ -62,9 +62,25 @@ class MyCharacteristicCallbacks: public BLECharacteristicCallbacks {
             pCharacteristic->notify();
           }
         }
+        // Handle PING command from app (for connection test)
+        else if (value == "PING") {
+          pCharacteristic->setValue("PONG");
+          pCharacteristic->notify();
+          Serial.println("Responded to PING with PONG");
+        }
       }
     }
 };
+
+void startAdvertising() {
+  BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
+  pAdvertising->addServiceUUID(SERVICE_UUID);
+  pAdvertising->setScanResponse(true);
+  pAdvertising->setMinPreferred(0x06);  // Helps with iPhone connection issues
+  pAdvertising->setMaxPreferred(0x12);
+  BLEDevice::startAdvertising();
+  Serial.println("BLE Advertising started...");
+}
 
 void setup() {
   Serial.begin(115200);
@@ -86,6 +102,7 @@ void setup() {
                       CHARACTERISTIC_UUID,
                       BLECharacteristic::PROPERTY_READ   |
                       BLECharacteristic::PROPERTY_WRITE  |
+                      BLECharacteristic::PROPERTY_WRITE_NR |
                       BLECharacteristic::PROPERTY_NOTIFY
                     );
 
@@ -98,16 +115,28 @@ void setup() {
   pService->start();
   
   // Start advertising
-  BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
-  pAdvertising->addServiceUUID(SERVICE_UUID);
-  pAdvertising->setScanResponse(false);
-  pAdvertising->setMinPreferred(0x0);
-  BLEDevice::startAdvertising();
+  startAdvertising();
 
   Serial.println("ESP32 Ready. BLE Advertising started as 'SOS_KEYCHAIN'.");
 }
 
 void loop() {
+  // ==========================================
+  // Handle BLE Connection State Changes
+  // ==========================================
+  // Disconnecting - restart advertising after a short delay
+  if (!deviceConnected && oldDeviceConnected) {
+    delay(500); // Give the BLE stack time to clean up
+    startAdvertising();
+    Serial.println("Restarted advertising after disconnect.");
+    oldDeviceConnected = deviceConnected;
+  }
+  
+  // Connecting
+  if (deviceConnected && !oldDeviceConnected) {
+    oldDeviceConnected = deviceConnected;
+  }
+
   int sosState = digitalRead(buttonSOS);
   int ctrlState = digitalRead(buttonCtrl);
 
@@ -141,10 +170,11 @@ void loop() {
   }
 
   // ==========================================
-  // 2. Check Control Button (Button 2) - Stop
+  // 2. Check Control Button (Button 2) - Stop / Reset BLE
   // ==========================================
   if (ctrlState == LOW) {
     if (isSOSActive) {
+      // Stop SOS alarm
       isSOSActive = false;
       digitalWrite(ledPin, LOW);
       noTone(buzzerPin);
@@ -155,10 +185,17 @@ void loop() {
         pCharacteristic->setValue("SOS_CANCELLED");
         pCharacteristic->notify();
       }
-    } else if (deviceConnected) {
-      // If SOS is NOT active, use Button 2 to force disconnect BLE
-      pServer->disconnect(pServer->getConnId());
-      Serial.println("Forced BLE Disconnect via Button 2.");
+    } else {
+      // If SOS is NOT active, use Button 2 to restart BLE advertising
+      // This helps when the app can't find the device
+      if (deviceConnected) {
+        pServer->disconnect(pServer->getConnId());
+        Serial.println("Forced BLE Disconnect via Button 2.");
+      } else {
+        // Restart advertising if not connected
+        startAdvertising();
+        Serial.println("Manually restarted BLE advertising via Button 2.");
+      }
     }
     delay(300); // Heavy debounce to prevent spamming
   }
