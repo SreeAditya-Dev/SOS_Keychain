@@ -17,7 +17,8 @@ import 'package:safeher/services/storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
-import 'package:flutter_foreground_task/models/notification_visibility.dart' as fft;
+import 'package:flutter_foreground_task/models/notification_visibility.dart'
+    as fft;
 import 'package:go_router/go_router.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -31,23 +32,25 @@ late final GoRouter _router;
 
 /// Global theme notifier for dark mode toggle
 class ThemeNotifier extends ChangeNotifier {
-  ThemeMode _themeMode = ThemeMode.light;
-  
+  ThemeMode _themeMode = ThemeMode.dark;
+
   ThemeMode get themeMode => _themeMode;
   bool get isDarkMode => _themeMode == ThemeMode.dark;
-  
+
   void setThemeMode(ThemeMode mode) {
     _themeMode = mode;
     _updateSystemUI();
     notifyListeners();
   }
-  
+
   void toggleTheme() {
-    _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    _themeMode = _themeMode == ThemeMode.light
+        ? ThemeMode.dark
+        : ThemeMode.light;
     _updateSystemUI();
     notifyListeners();
   }
-  
+
   void _updateSystemUI() {
     if (_themeMode == ThemeMode.dark) {
       SystemChrome.setSystemUIOverlayStyle(
@@ -69,14 +72,14 @@ class ThemeNotifier extends ChangeNotifier {
       );
     }
   }
-  
+
   Future<void> loadFromStorage() async {
-    final isDark = await _storageService.getSetting<bool>('dark_mode') ?? false;
+    final isDark = await _storageService.getSetting<bool>('dark_mode') ?? true;
     _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
     _updateSystemUI();
     notifyListeners();
   }
-  
+
   Future<void> saveToStorage() async {
     await _storageService.saveSetting('dark_mode', isDarkMode);
   }
@@ -102,10 +105,7 @@ Future<void> main() async {
   await themeNotifier.loadFromStorage();
 
   // Initialize WorkManager for background task management
-  await Workmanager().initialize(
-    callbackDispatcher,
-    isInDebugMode: kDebugMode,
-  );
+  await Workmanager().initialize(callbackDispatcher, isInDebugMode: kDebugMode);
 
   initForegroundTask();
   await _notificationService.initialize(
@@ -117,16 +117,16 @@ Future<void> main() async {
   final pairedDevice = await _storageService.getPairedDevice();
 
   _router = _buildRouter(onboardingDone: onboardingDone);
-  
+
   // Run the app first, then init BLE in background
   runApp(const SafeHerApp());
-  
+
   // Initialize BLE and start foreground service if device is paired
   Future.microtask(() async {
     await _bleService.init(pairedDevice?.id, _handleSOSTrigger);
     // Listen for connection changes to show notifications
     _bleService.connectionStream.listen(_handleConnectionChange);
-    
+
     // Start foreground service if device is paired to keep app alive
     if (pairedDevice != null) {
       await _startForegroundService();
@@ -142,7 +142,8 @@ GoRouter _buildRouter({required bool onboardingDone}) {
     routes: [
       GoRoute(
         path: '/',
-        builder: (context, state) => OnboardingScreen(storageService: _storageService),
+        builder: (context, state) =>
+            OnboardingScreen(storageService: _storageService),
       ),
       GoRoute(
         path: '/pair',
@@ -154,7 +155,8 @@ GoRouter _buildRouter({required bool onboardingDone}) {
       ),
       GoRoute(
         path: '/contacts',
-        builder: (context, state) => ContactsScreen(storageService: _storageService),
+        builder: (context, state) =>
+            ContactsScreen(storageService: _storageService),
       ),
       GoRoute(
         path: '/settings',
@@ -166,7 +168,8 @@ GoRouter _buildRouter({required bool onboardingDone}) {
       ),
       GoRoute(
         path: '/history',
-        builder: (context, state) => HistoryScreen(storageService: _storageService),
+        builder: (context, state) =>
+            HistoryScreen(storageService: _storageService),
       ),
       GoRoute(
         path: '/home',
@@ -221,7 +224,9 @@ Future<void> _schedulePeriodicKeepAlive() async {
     await Workmanager().registerPeriodicTask(
       'keepalive-check',
       'keepAliveCheck',
-      frequency: const Duration(minutes: 15), // Minimum interval allowed by Android
+      frequency: const Duration(
+        minutes: 15,
+      ), // Minimum interval allowed by Android
       constraints: Constraints(
         networkType: NetworkType.notRequired,
         requiresBatteryNotLow: false,
@@ -244,19 +249,20 @@ Future<void> _handleSOSTrigger() async {
   } catch (e) {
     debugPrint('⚠️ Failed to enable WakeLock: $e');
   }
-  
+
   final contacts = await _storageService.getContacts();
   final log = await _sosService.triggerSOS();
-  
+
   // Store for notification tap
   _lastSOSLog = log;
-  
+
   // Show enhanced notification with SOS log ID
   String? locationInfo;
   if (log.lat != null && log.lng != null) {
-    locationInfo = 'Location: ${log.lat!.toStringAsFixed(4)}, ${log.lng!.toStringAsFixed(4)}';
+    locationInfo =
+        'Location: ${log.lat!.toStringAsFixed(4)}, ${log.lng!.toStringAsFixed(4)}';
   }
-  
+
   await _notificationService.showSOSTriggered(
     contactCount: contacts.length,
     locationInfo: locationInfo,
@@ -264,7 +270,7 @@ Future<void> _handleSOSTrigger() async {
   );
 
   _router.go('/sos', extra: log);
-  
+
   // Keep WakeLock active for 30 seconds during SOS
   Future.delayed(const Duration(seconds: 30), () async {
     try {
@@ -277,8 +283,10 @@ Future<void> _handleSOSTrigger() async {
 }
 
 void _handleNotificationTap(NotificationResponse response) async {
-  debugPrint('📱 Notification tapped: action=${response.actionId}, payload=${response.payload}');
-  
+  debugPrint(
+    '📱 Notification tapped: action=${response.actionId}, payload=${response.payload}',
+  );
+
   // Handle "I'm Safe" action
   if (response.actionId == 'cancel_sos') {
     if (_lastSOSLog != null) {
@@ -289,7 +297,7 @@ void _handleNotificationTap(NotificationResponse response) async {
     _router.go('/home');
     return;
   }
-  
+
   // Handle notification tap or "View SOS" action
   if (_lastSOSLog != null && !(_lastSOSLog!.wasCancelled)) {
     // Navigate to SOS screen with the log
@@ -314,7 +322,7 @@ bool _wasConnected = false;
 void _handleConnectionChange(bool isConnected) async {
   final pairedDevice = await _storageService.getPairedDevice();
   final deviceName = pairedDevice?.name ?? 'SOS Keychain';
-  
+
   if (isConnected && !_wasConnected) {
     await _notificationService.showDeviceConnected(deviceName);
     // Start foreground service when connected to keep app alive
@@ -330,10 +338,11 @@ Future<void> _startForegroundService() async {
   if (await FlutterForegroundTask.isRunningService) {
     return;
   }
-  
+
   // Check if battery optimization is already disabled before requesting
-  final isBatteryOptimizationDisabled = await FlutterForegroundTask.isIgnoringBatteryOptimizations;
-  
+  final isBatteryOptimizationDisabled =
+      await FlutterForegroundTask.isIgnoringBatteryOptimizations;
+
   if (!isBatteryOptimizationDisabled) {
     // Only request if not already granted
     debugPrint('📋 Requesting battery optimization exemption...');
@@ -341,7 +350,7 @@ Future<void> _startForegroundService() async {
   } else {
     debugPrint('✅ Battery optimization already disabled');
   }
-  
+
   await FlutterForegroundTask.startService(
     notificationTitle: 'SafeHer Active',
     notificationText: 'Your SOS keychain is connected and monitoring',
