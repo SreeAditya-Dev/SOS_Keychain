@@ -65,11 +65,16 @@ flutter_launcher_icons:
   adaptive_icon_foreground: "assets/icons/safeher.png"
 
 flutter_native_splash:
-  color: "#FFFFFF"
-  image: assets/icons/splash_logo.png
+  color: "#1A1A1A"
+  color_dark: "#1A1A1A"
+  image: assets/icons/safeher_logo.png
   android_12:
-    color: "#FFFFFF"
-    image: assets/icons/splash_logo.png
+    color: "#1A1A1A"
+    color_dark: "#1A1A1A"
+    image: assets/icons/safeher_logo.png
+  android: true
+  ios: true
+  web: false
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- SafeHer Primary Color (Coral Red) -->
-    <color name="splash_background">#E8505B</color>
-    <color name="primary_color">#E8505B</color>
+    <!-- SafeHer Colors -->
+    <color name="splash_background">#1A1A1A</color>
+    <color name="primary_color">#ECCB32</color>
 	<color name="ic_launcher_background">#FFFFFF</color>
 </resources>

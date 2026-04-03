@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- SafeHer Colors - Dark Theme -->
+    <color name="splash_background">#1A1A1A</color>
+    <color name="primary_color">#ECCB32</color>
+	<color name="ic_launcher_background">#FFFFFF</color>
+</resources>

@@ -7,10 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 
 class HistoryScreen extends StatefulWidget {
-  const HistoryScreen({
-    super.key,
-    required this.storageService,
-  });
+  const HistoryScreen({super.key, required this.storageService});
 
   final StorageService storageService;
 
@@ -54,9 +51,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.error,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
             child: const Text('Delete'),
           ),
         ],
@@ -118,9 +113,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.error,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
             child: const Text('Clear All'),
           ),
         ],
@@ -148,9 +141,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Future<void> _openLocation(SOSLog log) async {
     if (log.lat == null || log.lng == null) return;
 
-    final uri = Uri.parse(
-      'https://maps.google.com/?q=${log.lat},${log.lng}',
-    );
+    final uri = Uri.parse('https://maps.google.com/?q=${log.lat},${log.lng}');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
@@ -158,6 +149,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -173,13 +166,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: AppTheme.surfaceLight,
+                        color: isDark
+                            ? AppTheme.surfaceDark
+                            : AppTheme.surfaceLight,
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: AppTheme.cardShadow,
+                        boxShadow: isDark ? [] : AppTheme.cardShadow,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.arrow_back_rounded,
-                        color: AppTheme.textPrimary,
+                        color: isDark
+                            ? AppTheme.textPrimaryDark
+                            : AppTheme.textPrimary,
                       ),
                     ),
                   ),
@@ -203,9 +200,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   if (_logs.isNotEmpty)
                     IconButton(
                       onPressed: _clearAllLogs,
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.delete_sweep_rounded,
-                        color: AppTheme.error,
+                        color: isDark
+                            ? AppTheme.error.withValues(alpha: 0.8)
+                            : AppTheme.error,
                       ),
                       tooltip: 'Clear all',
                     ),
@@ -218,8 +217,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _logs.isEmpty
-                      ? _buildEmptyState()
-                      : _buildLogsList(),
+                  ? _buildEmptyState()
+                  : _buildLogsList(),
             ),
           ],
         ),
@@ -256,9 +255,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
             Text(
               'Great news! You haven\'t had any emergency alerts.\nStay safe!',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppTheme.textSecondary,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
             ),
           ],
         ),
@@ -275,6 +274,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Widget _buildLogCard(SOSLog log) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final dateFormat = DateFormat('MMM d, yyyy');
     final timeFormat = DateFormat('h:mm a');
     final hasLocation = log.lat != null && log.lng != null;
@@ -283,12 +283,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
       padding: const EdgeInsets.only(bottom: 12),
       child: Container(
         decoration: BoxDecoration(
-          color: AppTheme.surfaceLight,
+          color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
           borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-          boxShadow: AppTheme.cardShadow,
+          boxShadow: isDark ? [] : AppTheme.cardShadow,
           border: log.wasCancelled
               ? Border.all(
-                  color: AppTheme.success.withValues(alpha: 0.3),
+                  color: AppTheme.success.withValues(alpha: isDark ? 0.5 : 0.3),
                   width: 2,
                 )
               : null,
@@ -313,7 +313,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       log.wasCancelled
                           ? Icons.check_circle_rounded
                           : Icons.warning_rounded,
-                      color: log.wasCancelled ? AppTheme.success : AppTheme.error,
+                      color: log.wasCancelled
+                          ? AppTheme.success
+                          : AppTheme.error,
                       size: 26,
                     ),
                   ),
@@ -326,9 +328,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           children: [
                             Text(
                               'SOS Alert',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                             if (log.wasCancelled) ...[
                               const SizedBox(width: 8),
@@ -338,15 +339,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.success.withValues(alpha: 0.1),
+                                  color: AppTheme.success.withValues(
+                                    alpha: 0.1,
+                                  ),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
                                   'Cancelled',
-                                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: AppTheme.success,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                  style: Theme.of(context).textTheme.labelSmall
+                                      ?.copyWith(
+                                        color: AppTheme.success,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                 ),
                               ),
                             ],
@@ -362,9 +366,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   ),
                   IconButton(
                     onPressed: () => _deleteLog(log),
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.delete_outline_rounded,
-                      color: AppTheme.textMuted,
+                      color: isDark
+                          ? AppTheme.textMutedDark
+                          : AppTheme.textMuted,
                     ),
                   ),
                 ],
@@ -372,7 +378,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
 
             // Divider
-            Divider(height: 1, color: Colors.grey.shade200),
+            Divider(
+              height: 1,
+              color: isDark
+                  ? AppTheme.textMutedDark.withValues(alpha: 0.3)
+                  : Colors.grey.shade200,
+            ),
 
             // Details
             Padding(
@@ -382,10 +393,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   // Contacts notified
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.people_rounded,
                         size: 18,
-                        color: AppTheme.textSecondary,
+                        color: isDark
+                            ? AppTheme.textSecondaryDark
+                            : AppTheme.textSecondary,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -399,14 +412,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Location
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.location_on_rounded,
                         size: 18,
-                        color: AppTheme.textSecondary,
+                        color: isDark
+                            ? AppTheme.textSecondaryDark
+                            : AppTheme.textSecondary,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
