@@ -3,13 +3,11 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 
-// --- Pin Definitions ---
-const int buzzerPin = 4;
-const int buttonSOS = 15;   // Button 1: Hold 2 sec to trigger SOS
-const int buttonCtrl = 5;   // Button 2: Stop alarm / Reset BLE
-const int ledPin = 12;      // External LED indicator (Changed from 2 to avoid built-in LED)
-                            // GPIO 2 is the built-in LED on most ESP32 boards
-                            // Use GPIO 12, 13, 14, or 16 for external LED
+// --- ESP32-C3 SuperMini Pin Definitions ---
+const int buttonSOS = 3;    // Button 1: Hold 2 sec to trigger SOS
+const int buttonCtrl = 4;   // Button 2: Stop alarm / Reset BLE
+const int ledPin = 5;       // External LED indicator 
+const int buzzerPin = 6;    // Passive Buzzer
 
 // --- BLE UUIDs ---
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
@@ -86,6 +84,7 @@ void startAdvertising() {
 
 void setup() {
   Serial.begin(115200);
+  delay(1000); // Give the C3 serial monitor a moment to boot
 
   pinMode(buzzerPin, OUTPUT);
   pinMode(ledPin, OUTPUT);
@@ -119,14 +118,13 @@ void setup() {
   // Start advertising
   startAdvertising();
 
-  Serial.println("ESP32 Ready. BLE Advertising started as 'SOS_KEYCHAIN'.");
+  Serial.println("ESP32-C3 Ready. BLE Advertising started as 'SOS_KEYCHAIN'.");
 }
 
 void loop() {
   // ==========================================
   // Handle BLE Connection State Changes
   // ==========================================
-  // Disconnecting - restart advertising after a short delay
   if (!deviceConnected && oldDeviceConnected) {
     delay(500); // Give the BLE stack time to clean up
     startAdvertising();
@@ -134,7 +132,6 @@ void loop() {
     oldDeviceConnected = deviceConnected;
   }
   
-  // Connecting
   if (deviceConnected && !oldDeviceConnected) {
     oldDeviceConnected = deviceConnected;
   }
@@ -151,12 +148,10 @@ void loop() {
     delay(50); // Debounce
   } 
   else if (sosState == LOW && sosButtonHeld) {
-    // If held for more than 2000ms (2 seconds) and SOS isn't already active
     if (millis() - sosButtonPressTime >= 2000 && !isSOSActive) {
       isSOSActive = true;
       Serial.println("🚨 SOS TRIGGERED! 🚨");
       
-      // Send BLE Notification to phone if connected
       if (deviceConnected) {
         pCharacteristic->setValue("SOS_ALERT_TRIGGERED");
         pCharacteristic->notify();
@@ -167,7 +162,7 @@ void loop() {
     }
   } 
   else if (sosState == HIGH && sosButtonHeld) {
-    sosButtonHeld = false; // Reset tracker when button is released
+    sosButtonHeld = false; 
     delay(50);
   }
 
@@ -176,7 +171,6 @@ void loop() {
   // ==========================================
   if (ctrlState == LOW) {
     if (isSOSActive) {
-      // Stop SOS alarm
       isSOSActive = false;
       digitalWrite(ledPin, LOW);
       noTone(buzzerPin);
@@ -188,13 +182,10 @@ void loop() {
         pCharacteristic->notify();
       }
     } else {
-      // If SOS is NOT active, use Button 2 to restart BLE advertising
-      // This helps when the app can't find the device
       if (deviceConnected) {
         pServer->disconnect(pServer->getConnId());
         Serial.println("Forced BLE Disconnect via Button 2.");
       } else {
-        // Restart advertising if not connected
         startAdvertising();
         Serial.println("Manually restarted BLE advertising via Button 2.");
       }
@@ -205,7 +196,6 @@ void loop() {
   // ==========================================
   // 3. Handle SOS Alarm Output (Non-Blocking)
   // ==========================================
-  // We use millis() here instead of delay() so we can still read button presses!
   if (isSOSActive) {
     unsigned long currentMillis = millis();
     if (currentMillis - previousMillis >= 200) { // Toggle every 200ms
@@ -221,4 +211,7 @@ void loop() {
       }
     }
   }
+
+  // CRITICAL: Feed the Watchdog Timer to prevent crashes during BLE pairing!
+  delay(10); 
 }
