@@ -115,11 +115,11 @@ class _SOSTriggeredScreenState extends State<SOSTriggeredScreen>
 
   Future<void> _openMap() async {
     if (widget.log.lat == null || widget.log.lng == null) return;
-    
+
     final url = Uri.parse(
       'https://www.google.com/maps/search/?api=1&query=${widget.log.lat},${widget.log.lng}',
     );
-    
+
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     }
@@ -264,7 +264,9 @@ class _SOSTriggeredScreenState extends State<SOSTriggeredScreen>
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.success.withValues(alpha: 0.15),
+                                  color: AppTheme.success.withValues(
+                                    alpha: 0.15,
+                                  ),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
@@ -304,7 +306,9 @@ class _SOSTriggeredScreenState extends State<SOSTriggeredScreen>
                                   const SizedBox(width: 12),
                                   Text(
                                     name,
-                                    style: Theme.of(context).textTheme.titleMedium,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
                                   ),
                                   const Spacer(),
                                   Icon(
@@ -331,13 +335,16 @@ class _SOSTriggeredScreenState extends State<SOSTriggeredScreen>
                           width: double.infinity,
                           decoration: BoxDecoration(
                             color: Colors.grey.shade200,
-                            borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radiusLarge,
+                            ),
                             image: DecorationImage(
                               image: NetworkImage(
-                                'https://maps.googleapis.com/maps/api/staticmap'
+                                // Using OpenStreetMap static tiles (free, no API key required)
+                                'https://staticmap.openstreetmap.de/staticmap.php'
                                 '?center=${widget.log.lat},${widget.log.lng}'
-                                '&zoom=15&size=600x300&maptype=roadmap'
-                                '&markers=color:red%7C${widget.log.lat},${widget.log.lng}',
+                                '&zoom=15&size=600x300'
+                                '&markers=${widget.log.lat},${widget.log.lng},red-pushpin',
                               ),
                               fit: BoxFit.cover,
                               onError: (_, __) {},
@@ -345,7 +352,9 @@ class _SOSTriggeredScreenState extends State<SOSTriggeredScreen>
                           ),
                           child: Container(
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                              borderRadius: BorderRadius.circular(
+                                AppTheme.radiusLarge,
+                              ),
                               gradient: LinearGradient(
                                 begin: Alignment.bottomCenter,
                                 end: Alignment.topCenter,
@@ -359,10 +368,7 @@ class _SOSTriggeredScreenState extends State<SOSTriggeredScreen>
                             padding: const EdgeInsets.all(16),
                             child: const Row(
                               children: [
-                                Icon(
-                                  Icons.map_rounded,
-                                  color: Colors.white,
-                                ),
+                                Icon(Icons.map_rounded, color: Colors.white),
                                 SizedBox(width: 8),
                                 Text(
                                   'Tap to open in Maps',
@@ -399,7 +405,9 @@ class _SOSTriggeredScreenState extends State<SOSTriggeredScreen>
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: AppTheme.success.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radiusMedium,
+                        ),
                         border: Border.all(
                           color: AppTheme.success.withValues(alpha: 0.3),
                         ),
@@ -463,14 +471,8 @@ class _SOSTriggeredScreenState extends State<SOSTriggeredScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                Text(
-                  value,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
+                Text(label, style: Theme.of(context).textTheme.bodySmall),
+                Text(value, style: Theme.of(context).textTheme.titleMedium),
               ],
             ),
           ),

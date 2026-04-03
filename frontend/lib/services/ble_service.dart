@@ -41,7 +41,7 @@ class BLEError {
         originalError: e,
       );
     }
-    if (e.toString().contains('bluetooth is off') || 
+    if (e.toString().contains('bluetooth is off') ||
         e.toString().contains('Bluetooth is turned off')) {
       return BLEError(
         type: BLEErrorType.bluetoothOff,
@@ -94,9 +94,10 @@ class BLEService {
   final _errorController = StreamController<BLEError>.broadcast();
 
   Stream<bool> get connectionStream => _connectionController.stream;
-  Stream<List<ScanResult>> get scanResultsStream => _scanResultsController.stream;
+  Stream<List<ScanResult>> get scanResultsStream =>
+      _scanResultsController.stream;
   Stream<BLEError> get errorStream => _errorController.stream;
-  
+
   bool get isConnected => _isConnected;
   bool get isScanning => _isScanning;
   String? get connectedDeviceId => _device?.remoteId.toString();
@@ -105,25 +106,35 @@ class BLEService {
   // Store for auto-reconnect
   String? _savedDeviceId;
   Future<void> Function()? _onSOSTrigger;
+  Future<void> Function()? _onSOSCancel;
   Timer? _autoReconnectTimer;
 
-  Future<void> init(String? savedDeviceId, Future<void> Function() onSOSTrigger) async {
+  Future<void> init(
+    String? savedDeviceId,
+    Future<void> Function() onSOSTrigger, {
+    Future<void> Function()? onSOSCancel,
+  }) async {
     _savedDeviceId = savedDeviceId;
     _onSOSTrigger = onSOSTrigger;
-    
+    _onSOSCancel = onSOSCancel;
+
     // Check Bluetooth state first
     final isSupported = await FlutterBluePlus.isSupported;
     if (!isSupported) {
-      _errorController.add(BLEError(
-        type: BLEErrorType.bluetoothUnavailable,
-        message: 'Bluetooth is not supported on this device',
-      ));
+      _errorController.add(
+        BLEError(
+          type: BLEErrorType.bluetoothUnavailable,
+          message: 'Bluetooth is not supported on this device',
+        ),
+      );
       return;
     }
 
     // Listen for Bluetooth adapter state changes
     FlutterBluePlus.adapterState.listen((state) {
-      if (state == BluetoothAdapterState.on && !_isConnected && _savedDeviceId != null) {
+      if (state == BluetoothAdapterState.on &&
+          !_isConnected &&
+          _savedDeviceId != null) {
         // Bluetooth turned on, try to reconnect
         _startAutoReconnect();
       }
@@ -136,14 +147,18 @@ class BLEService {
 
   /// Start automatic reconnection process
   void _startAutoReconnect() {
-    if (_disposed || _isConnected || _savedDeviceId == null || _onSOSTrigger == null) return;
-    
+    if (_disposed ||
+        _isConnected ||
+        _savedDeviceId == null ||
+        _onSOSTrigger == null)
+      return;
+
     // Cancel any existing timer
     _autoReconnectTimer?.cancel();
-    
+
     // Try to reconnect immediately
     _reconnect(_savedDeviceId!, _onSOSTrigger!);
-    
+
     // Set up periodic reconnection attempts every 10 seconds if not connected
     // This allows quick reconnection when keychain comes back in range
     _autoReconnectTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
@@ -151,7 +166,7 @@ class BLEService {
         timer.cancel();
         return;
       }
-      
+
       if (_savedDeviceId != null && _onSOSTrigger != null) {
         print('Auto-reconnect attempt...');
         _reconnect(_savedDeviceId!, _onSOSTrigger!);
@@ -170,7 +185,7 @@ class BLEService {
     try {
       final isSupported = await FlutterBluePlus.isSupported;
       if (!isSupported) return false;
-      
+
       final state = await FlutterBluePlus.adapterState.first;
       return state == BluetoothAdapterState.on;
     } catch (e) {
@@ -180,22 +195,24 @@ class BLEService {
 
   Future<void> startScan() async {
     if (_isScanning) return;
-    
+
     try {
       // Check Bluetooth state
       final state = await FlutterBluePlus.adapterState.first;
       if (state != BluetoothAdapterState.on) {
-        _errorController.add(BLEError(
-          type: BLEErrorType.bluetoothOff,
-          message: 'Bluetooth is turned off',
-          suggestion: 'Please enable Bluetooth to scan for devices',
-        ));
+        _errorController.add(
+          BLEError(
+            type: BLEErrorType.bluetoothOff,
+            message: 'Bluetooth is turned off',
+            suggestion: 'Please enable Bluetooth to scan for devices',
+          ),
+        );
         return;
       }
-      
+
       _isScanning = true;
       await FlutterBluePlus.startScan(timeout: const Duration(seconds: 15));
-      
+
       await _scanSubscription?.cancel();
       _scanSubscription = FlutterBluePlus.scanResults.listen(
         (results) {
@@ -205,7 +222,7 @@ class BLEService {
           _errorController.add(BLEError.fromException(e));
         },
       );
-      
+
       // Auto-stop scanning flag after timeout
       Future.delayed(const Duration(seconds: 15), () {
         _isScanning = false;
@@ -251,11 +268,11 @@ class BLEService {
     await stopScan();
     _stopAutoReconnect(); // Stop any existing auto-reconnect
     _reconnectAttempts = 0; // Reset reconnect attempts on manual connect
-    
+
     // Save for auto-reconnect
     _savedDeviceId = device.remoteId.toString();
     _onSOSTrigger = onSOSTrigger;
-    
+
     return await _connectToDevice(device, onSOSTrigger);
   }
 
@@ -276,7 +293,7 @@ class BLEService {
       } catch (e) {
         // Ignore disconnect errors - device may not be connected
       }
-      
+
       // IMPORTANT: Use autoConnect: false for initial connection on Android
       // autoConnect: true can cause indefinite connection attempts and timeouts
       // Increase timeout to 30 seconds for more reliability
@@ -284,10 +301,10 @@ class BLEService {
         autoConnect: false,
         timeout: const Duration(seconds: 30),
       );
-      
+
       // Small delay after connection for Android stability
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       // Request higher MTU for better data transfer (Android specific)
       // ESP32 typically supports up to 517 bytes, but 512 is a safe value
       try {
@@ -296,11 +313,10 @@ class BLEService {
         // MTU request may fail on some devices, continue anyway
         print('MTU request failed (non-critical): $e');
       }
-      
     } catch (e) {
       final error = BLEError.fromException(e);
       _errorController.add(error);
-      
+
       // Attempt reconnect if not at max attempts
       if (_reconnectAttempts < _maxReconnectAttempts) {
         _reconnectAttempts++;
@@ -310,11 +326,13 @@ class BLEService {
           }
         });
       } else {
-        _errorController.add(BLEError(
-          type: BLEErrorType.connectionFailed,
-          message: 'Failed to connect after $_maxReconnectAttempts attempts',
-          suggestion: 'Make sure your keychain is powered on and try again',
-        ));
+        _errorController.add(
+          BLEError(
+            type: BLEErrorType.connectionFailed,
+            message: 'Failed to connect after $_maxReconnectAttempts attempts',
+            suggestion: 'Make sure your keychain is powered on and try again',
+          ),
+        );
       }
       return false;
     }
@@ -326,16 +344,18 @@ class BLEService {
     try {
       // Another small delay before service discovery for stability
       await Future.delayed(const Duration(milliseconds: 300));
-      
+
       final services = await device.discoverServices();
       bool serviceFound = false;
       bool characteristicFound = false;
-      
+
       for (final service in services) {
-        if (service.uuid.toString().toLowerCase() == BLEConstants.serviceUUID.toLowerCase()) {
+        if (service.uuid.toString().toLowerCase() ==
+            BLEConstants.serviceUUID.toLowerCase()) {
           serviceFound = true;
           for (final char in service.characteristics) {
-            if (char.uuid.toString().toLowerCase() == BLEConstants.sosCharUUID.toLowerCase()) {
+            if (char.uuid.toString().toLowerCase() ==
+                BLEConstants.sosCharUUID.toLowerCase()) {
               characteristicFound = true;
               _sosChar = char;
               await char.setNotifyValue(true);
@@ -347,38 +367,49 @@ class BLEService {
                     final message = utf8.decode(value);
                     if (message == BLEConstants.sosTriggerMessage) {
                       await onSOSTrigger();
+                    } else if (message == BLEConstants.sosCancelledMessage) {
+                      // Handle SOS cancel from physical button
+                      if (_onSOSCancel != null) {
+                        await _onSOSCancel!();
+                      }
                     }
                   }
                 },
                 onError: (e) {
-                  _errorController.add(BLEError(
-                    type: BLEErrorType.unknown,
-                    message: 'Error receiving data from keychain',
-                    originalError: e,
-                  ));
+                  _errorController.add(
+                    BLEError(
+                      type: BLEErrorType.unknown,
+                      message: 'Error receiving data from keychain',
+                      originalError: e,
+                    ),
+                  );
                 },
               );
             }
           }
         }
       }
-      
+
       if (!serviceFound) {
-        _errorController.add(BLEError(
-          type: BLEErrorType.serviceNotFound,
-          message: 'SOS service not found on device',
-          suggestion: 'Make sure you are connecting to a SafeHer keychain',
-        ));
+        _errorController.add(
+          BLEError(
+            type: BLEErrorType.serviceNotFound,
+            message: 'SOS service not found on device',
+            suggestion: 'Make sure you are connecting to a SafeHer keychain',
+          ),
+        );
         await disconnect();
         return false;
       }
-      
+
       if (!characteristicFound) {
-        _errorController.add(BLEError(
-          type: BLEErrorType.characteristicNotFound,
-          message: 'SOS characteristic not found',
-          suggestion: 'The keychain firmware may need to be updated',
-        ));
+        _errorController.add(
+          BLEError(
+            type: BLEErrorType.characteristicNotFound,
+            message: 'SOS characteristic not found',
+            suggestion: 'The keychain firmware may need to be updated',
+          ),
+        );
         await disconnect();
         return false;
       }
@@ -392,13 +423,15 @@ class BLEService {
       if (state == BluetoothConnectionState.disconnected) {
         _isConnected = false;
         _connectionController.add(false);
-        
-        _errorController.add(BLEError(
-          type: BLEErrorType.disconnected,
-          message: 'Keychain disconnected',
-          suggestion: 'Attempting to reconnect...',
-        ));
-        
+
+        _errorController.add(
+          BLEError(
+            type: BLEErrorType.disconnected,
+            message: 'Keychain disconnected',
+            suggestion: 'Attempting to reconnect...',
+          ),
+        );
+
         // Start auto-reconnect when disconnected
         if (!_disposed && _savedDeviceId != null) {
           // Small delay before starting auto-reconnect
@@ -412,28 +445,36 @@ class BLEService {
           _reconnectAttempts = 0;
           _stopAutoReconnect(); // Stop auto-reconnect timer on successful connection
           _connectionController.add(true);
-          
+
           // Re-setup notifications after reconnection
           try {
             await Future.delayed(const Duration(milliseconds: 500));
             final services = await device.discoverServices();
             for (final service in services) {
-              if (service.uuid.toString().toLowerCase() == BLEConstants.serviceUUID.toLowerCase()) {
+              if (service.uuid.toString().toLowerCase() ==
+                  BLEConstants.serviceUUID.toLowerCase()) {
                 for (final char in service.characteristics) {
-                  if (char.uuid.toString().toLowerCase() == BLEConstants.sosCharUUID.toLowerCase()) {
+                  if (char.uuid.toString().toLowerCase() ==
+                      BLEConstants.sosCharUUID.toLowerCase()) {
                     _sosChar = char;
                     await char.setNotifyValue(true);
                     await _notifSubscription?.cancel();
-                    _notifSubscription = char.lastValueStream.listen(
-                      (value) async {
-                        if (value.isNotEmpty) {
-                          final message = utf8.decode(value);
-                          if (message == BLEConstants.sosTriggerMessage) {
-                            await onSOSTrigger();
+                    _notifSubscription = char.lastValueStream.listen((
+                      value,
+                    ) async {
+                      if (value.isNotEmpty) {
+                        final message = utf8.decode(value);
+                        if (message == BLEConstants.sosTriggerMessage) {
+                          await onSOSTrigger();
+                        } else if (message ==
+                            BLEConstants.sosCancelledMessage) {
+                          // Handle SOS cancel from physical button
+                          if (_onSOSCancel != null) {
+                            await _onSOSCancel!();
                           }
                         }
-                      },
-                    );
+                      }
+                    });
                   }
                 }
               }
@@ -450,14 +491,14 @@ class BLEService {
 
   Future<void> disconnect() async {
     _reconnectAttempts = _maxReconnectAttempts; // Prevent auto-reconnect
-    
+
     try {
       // Cancel subscriptions first
       await _notifSubscription?.cancel();
       _notifSubscription = null;
       await _connectionSubscription?.cancel();
       _connectionSubscription = null;
-      
+
       // Disconnect the device
       if (_device != null) {
         await _device!.disconnect();
@@ -468,7 +509,7 @@ class BLEService {
       // Ignore disconnect errors
       print('Disconnect error (ignored): $e');
     }
-    
+
     _device = null;
     _sosChar = null;
     _isConnected = false;
@@ -483,7 +524,7 @@ class BLEService {
     _onSOSTrigger = null;
     _reconnectAttempts = _maxReconnectAttempts; // Prevent auto-reconnect
     _disposed = true; // Prevent any reconnection attempts
-    
+
     try {
       await _notifSubscription?.cancel();
       _notifSubscription = null;
@@ -491,7 +532,7 @@ class BLEService {
       _connectionSubscription = null;
       await _scanSubscription?.cancel();
       _scanSubscription = null;
-      
+
       if (_device != null) {
         // Try to gracefully disconnect
         try {
@@ -499,17 +540,17 @@ class BLEService {
         } catch (e) {
           print('Device disconnect error: $e');
         }
-        
+
         // Give time for BLE stack cleanup
         await Future.delayed(const Duration(milliseconds: 500));
       }
-      
+
       // Stop any ongoing scans
       await FlutterBluePlus.stopScan();
     } catch (e) {
       print('Force disconnect error: $e');
     }
-    
+
     _device = null;
     _sosChar = null;
     _isConnected = false;
@@ -520,24 +561,28 @@ class BLEService {
 
   Future<bool> cancelSOS() async {
     if (_sosChar == null) {
-      _errorController.add(BLEError(
-        type: BLEErrorType.characteristicNotFound,
-        message: 'Not connected to keychain',
-        suggestion: 'Please reconnect to your keychain',
-      ));
+      _errorController.add(
+        BLEError(
+          type: BLEErrorType.characteristicNotFound,
+          message: 'Not connected to keychain',
+          suggestion: 'Please reconnect to your keychain',
+        ),
+      );
       return false;
     }
-    
+
     try {
       // ESP32 expects string data
       await _sosChar?.write(utf8.encode('CANCEL_SOS'));
       return true;
     } catch (e) {
-      _errorController.add(BLEError(
-        type: BLEErrorType.unknown,
-        message: 'Failed to send cancel signal',
-        originalError: e,
-      ));
+      _errorController.add(
+        BLEError(
+          type: BLEErrorType.unknown,
+          message: 'Failed to send cancel signal',
+          originalError: e,
+        ),
+      );
       return false;
     }
   }
@@ -547,19 +592,21 @@ class BLEService {
     Future<void> Function() onSOSTrigger,
   ) async {
     if (_disposed) return;
-    
+
     try {
       // First, check if Bluetooth is ready
       final isReady = await isBluetoothReady();
       if (!isReady) {
-        _errorController.add(BLEError(
-          type: BLEErrorType.bluetoothOff,
-          message: 'Bluetooth is not ready',
-          suggestion: 'Please enable Bluetooth',
-        ));
+        _errorController.add(
+          BLEError(
+            type: BLEErrorType.bluetoothOff,
+            message: 'Bluetooth is not ready',
+            suggestion: 'Please enable Bluetooth',
+          ),
+        );
         return;
       }
-      
+
       // Try to find the device in system bonded devices first
       final systemDevices = await FlutterBluePlus.systemDevices([]);
       for (final device in systemDevices) {
@@ -578,23 +625,23 @@ class BLEService {
       _errorController.add(BLEError.fromException(e));
     }
   }
-  
+
   Future<void> _scanAndReconnect(
     String deviceId,
     Future<void> Function() onSOSTrigger,
   ) async {
     if (_disposed) return;
-    
+
     try {
       await FlutterBluePlus.startScan(timeout: const Duration(seconds: 10));
-      
+
       bool found = false;
-      
+
       // Use a subscription instead of await for to avoid blocking
       _scanSubscription?.cancel();
       _scanSubscription = FlutterBluePlus.scanResults.listen((results) async {
         if (found || _disposed) return;
-        
+
         for (final result in results) {
           // Match by device ID or device name
           if (result.device.remoteId.toString() == deviceId ||
@@ -607,7 +654,7 @@ class BLEService {
           }
         }
       });
-      
+
       // Stop scan after timeout if not found
       Future.delayed(const Duration(seconds: 12), () async {
         if (!found && !_disposed) {

@@ -123,7 +123,11 @@ Future<void> main() async {
 
   // Initialize BLE and start foreground service if device is paired
   Future.microtask(() async {
-    await _bleService.init(pairedDevice?.id, _handleSOSTrigger);
+    await _bleService.init(
+      pairedDevice?.id,
+      _handleSOSTrigger,
+      onSOSCancel: _handleSOSCancelFromDevice,
+    );
     // Listen for connection changes to show notifications
     _bleService.connectionStream.listen(_handleConnectionChange);
 
@@ -280,6 +284,39 @@ Future<void> _handleSOSTrigger() async {
       debugPrint('⚠️ Failed to disable WakeLock: $e');
     }
   });
+}
+
+/// Handle SOS cancellation triggered from the physical device button
+Future<void> _handleSOSCancelFromDevice() async {
+  debugPrint('📱 SOS cancelled from device button');
+
+  if (_lastSOSLog != null) {
+    // Send "I am safe" SMS to contacts
+    await _sosService.cancelSOS(_lastSOSLog!);
+    debugPrint('✅ Sent "I am safe" SMS to contacts');
+
+    // Dismiss SOS notification and show cancelled notification
+    await _notificationService.showSOSCancelled();
+    debugPrint('✅ SOS notification dismissed');
+
+    // Clear the stored log
+    _lastSOSLog = null;
+  } else {
+    debugPrint('⚠️ No active SOS log to cancel');
+    // Still dismiss any lingering notification
+    await _notificationService.showSOSCancelled();
+  }
+
+  // Navigate to home screen
+  _router.go('/home');
+
+  // Disable WakeLock if it was enabled
+  try {
+    await WakelockPlus.disable();
+    debugPrint('🔓 WakeLock disabled after SOS cancel');
+  } catch (e) {
+    debugPrint('⚠️ Failed to disable WakeLock: $e');
+  }
 }
 
 void _handleNotificationTap(NotificationResponse response) async {
