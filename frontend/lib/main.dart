@@ -406,22 +406,34 @@ void _foregroundTaskCallback() {
 }
 
 class _SafeHerTaskHandler extends TaskHandler {
+  int _checkCount = 0;
+
   @override
   void onStart(DateTime timestamp, SendPort? sendPort) {
-    print('Foreground service started');
+    print('Foreground service started at $timestamp');
+    _checkCount = 0;
   }
 
   @override
   void onRepeatEvent(DateTime timestamp, SendPort? sendPort) {
+    _checkCount++;
     // This runs every interval (as configured in initForegroundTask)
-    // The BLE service auto-reconnect handles reconnection
-    // This just keeps the app alive in background
-    print('Background check: ${DateTime.now()}');
+    // Log every 12th check (once per minute with 5 second interval)
+    if (_checkCount % 12 == 0) {
+      print(
+        'Background check #$_checkCount: ${DateTime.now()} - BLE connected: ${_bleService.isConnected}',
+      );
+    }
+
+    // If BLE is not connected and we have a saved device, the auto-reconnect
+    // in BLE service will handle reconnection automatically
+    // The foreground service just keeps the Dart VM alive
   }
 
   @override
   void onDestroy(DateTime timestamp, SendPort? sendPort) {
-    print('Foreground service destroyed');
+    print('Foreground service destroyed at $timestamp');
+    // The native KeepAliveService will restart the app if needed
   }
 }
 
@@ -460,7 +472,8 @@ class _SafeHerAppState extends State<SafeHerApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Don't request here - it's requested when foreground service starts
+    // Schedule periodic keep-alive ping to native service
+    _scheduleKeepAlivePing();
   }
 
   @override
@@ -469,11 +482,49 @@ class _SafeHerAppState extends State<SafeHerApp> with WidgetsBindingObserver {
     super.dispose();
   }
 
+  void _scheduleKeepAlivePing() {
+    // Ping native service every 30 seconds to ensure it's running
+    Future.delayed(const Duration(seconds: 30), () async {
+      if (!mounted) return;
+      try {
+        await _keepAliveChannel.invokeMethod('keepAlive');
+      } catch (e) {
+        debugPrint('Keep-alive ping failed: $e');
+      }
+      _scheduleKeepAlivePing(); // Schedule next ping
+    });
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     debugPrint('App lifecycle state: $state');
-    // When app goes to background, the foreground service keeps it alive
-    // BLE service continues to run and trigger SOS when button is pressed
+
+    switch (state) {
+      case AppLifecycleState.resumed:
+        // App came to foreground - check BLE connection
+        debugPrint('App resumed - BLE connected: ${_bleService.isConnected}');
+        break;
+      case AppLifecycleState.paused:
+        // App going to background - ensure services are running
+        debugPrint('App paused - ensuring background services');
+        _ensureBackgroundServices();
+        break;
+      case AppLifecycleState.detached:
+        // App is being destroyed - native service will keep it alive
+        debugPrint('App detached - native service should restart');
+        break;
+      default:
+        break;
+    }
+  }
+
+  Future<void> _ensureBackgroundServices() async {
+    try {
+      // Ensure native keep-alive service is running
+      await _keepAliveChannel.invokeMethod('startKeepAliveService');
+    } catch (e) {
+      debugPrint('Failed to ensure background services: $e');
+    }
   }
 
   @override

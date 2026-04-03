@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:safeher/constants/app_theme.dart';
 import 'package:safeher/models/sos_log.dart';
 import 'package:safeher/services/storage_service.dart';
@@ -145,6 +147,21 @@ class _HistoryScreenState extends State<HistoryScreen> {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
+  }
+
+  void _showMapDialog(SOSLog log) {
+    if (log.lat == null || log.lng == null) return;
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (context) => _MapViewDialog(
+        log: log,
+        isDark: isDark,
+        onOpenInMaps: () => _openLocation(log),
+      ),
+    );
   }
 
   @override
@@ -434,8 +451,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       ),
                       if (hasLocation)
                         TextButton.icon(
-                          onPressed: () => _openLocation(log),
-                          icon: const Icon(Icons.open_in_new, size: 16),
+                          onPressed: () => _showMapDialog(log),
+                          icon: const Icon(Icons.map_rounded, size: 16),
                           label: const Text('View Map'),
                           style: TextButton.styleFrom(
                             foregroundColor: AppTheme.primaryColor,
@@ -447,9 +464,425 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ],
               ),
             ),
+
+            // Map preview (if location available)
+            if (hasLocation)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: GestureDetector(
+                  onTap: () => _showMapDialog(log),
+                  child: Container(
+                    height: 120,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isDark
+                            ? AppTheme.borderDark
+                            : AppTheme.borderLight,
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Stack(
+                        children: [
+                          FlutterMap(
+                            options: MapOptions(
+                              initialCenter: LatLng(log.lat!, log.lng!),
+                              initialZoom: 14.0,
+                              interactionOptions: const InteractionOptions(
+                                flags: InteractiveFlag.none,
+                              ),
+                            ),
+                            children: [
+                              TileLayer(
+                                urlTemplate:
+                                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                userAgentPackageName: 'com.safeher.app',
+                              ),
+                              MarkerLayer(
+                                markers: [
+                                  Marker(
+                                    point: LatLng(log.lat!, log.lng!),
+                                    width: 40,
+                                    height: 40,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: log.wasCancelled
+                                            ? AppTheme.success
+                                            : AppTheme.error,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 3,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color:
+                                                (log.wasCancelled
+                                                        ? AppTheme.success
+                                                        : AppTheme.error)
+                                                    .withOpacity(0.3),
+                                            blurRadius: 8,
+                                          ),
+                                        ],
+                                      ),
+                                      child: Icon(
+                                        log.wasCancelled
+                                            ? Icons.check_rounded
+                                            : Icons.warning_rounded,
+                                        color: Colors.white,
+                                        size: 18,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          // Tap indicator overlay
+                          Positioned(
+                            bottom: 8,
+                            right: 8,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.7),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.fullscreen_rounded,
+                                    color: Colors.white,
+                                    size: 14,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Expand',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
+    );
+  }
+}
+
+// Full screen map dialog
+class _MapViewDialog extends StatelessWidget {
+  const _MapViewDialog({
+    required this.log,
+    required this.isDark,
+    required this.onOpenInMaps,
+  });
+
+  final SOSLog log;
+  final bool isDark;
+  final VoidCallback onOpenInMaps;
+
+  @override
+  Widget build(BuildContext context) {
+    final dateFormat = DateFormat('MMM d, yyyy');
+    final timeFormat = DateFormat('h:mm a');
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(16),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.8,
+        ),
+        decoration: BoxDecoration(
+          color: isDark ? AppTheme.cardDark : AppTheme.cardLight,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: log.wasCancelled
+                          ? AppTheme.success.withOpacity(0.15)
+                          : AppTheme.error.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      log.wasCancelled
+                          ? Icons.check_circle_rounded
+                          : Icons.warning_rounded,
+                      color: log.wasCancelled
+                          ? AppTheme.success
+                          : AppTheme.error,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'SOS Location',
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          '${dateFormat.format(log.timestamp)} at ${timeFormat.format(log.timestamp)}',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: isDark
+                                    ? AppTheme.textSecondaryDark
+                                    : AppTheme.textSecondary,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: isDark
+                          ? AppTheme.textPrimaryDark
+                          : AppTheme.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Map
+            Flexible(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                height: 350,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark ? AppTheme.borderDark : AppTheme.borderLight,
+                  ),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: FlutterMap(
+                    options: MapOptions(
+                      initialCenter: LatLng(log.lat!, log.lng!),
+                      initialZoom: 16.0,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.safeher.app',
+                      ),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: LatLng(log.lat!, log.lng!),
+                            width: 60,
+                            height: 60,
+                            child: _AnimatedMarker(
+                              color: log.wasCancelled
+                                  ? AppTheme.success
+                                  : AppTheme.error,
+                              icon: log.wasCancelled
+                                  ? Icons.check_rounded
+                                  : Icons.warning_rounded,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Location info
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppTheme.surfaceDark
+                          : AppTheme.surfaceLight,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_rounded,
+                          color: AppTheme.primaryColor,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Coordinates',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: isDark
+                                          ? AppTheme.textMutedDark
+                                          : AppTheme.textMuted,
+                                    ),
+                              ),
+                              Text(
+                                '${log.lat!.toStringAsFixed(6)}, ${log.lng!.toStringAsFixed(6)}',
+                                style: Theme.of(context).textTheme.titleSmall
+                                    ?.copyWith(fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Action buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close_rounded, size: 18),
+                          label: const Text('Close'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            onOpenInMaps();
+                          },
+                          icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                          label: const Text('Open in Maps'),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Animated marker widget
+class _AnimatedMarker extends StatefulWidget {
+  const _AnimatedMarker({required this.color, required this.icon});
+
+  final Color color;
+  final IconData icon;
+
+  @override
+  State<_AnimatedMarker> createState() => _AnimatedMarkerState();
+}
+
+class _AnimatedMarkerState extends State<_AnimatedMarker>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat(reverse: true);
+    _animation = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            // Pulse ring
+            Container(
+              width: 60 * _animation.value,
+              height: 60 * _animation.value,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: widget.color.withOpacity(
+                  0.2 * (1 - _animation.value + 0.2),
+                ),
+              ),
+            ),
+            // Inner marker
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: widget.color,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 3),
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.color.withOpacity(0.4),
+                    blurRadius: 10,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: Icon(widget.icon, color: Colors.white, size: 16),
+            ),
+          ],
+        );
+      },
     );
   }
 }

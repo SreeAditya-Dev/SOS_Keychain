@@ -1,3 +1,5 @@
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:safeher/constants/app_theme.dart';
 import 'package:safeher/models/sos_log.dart';
 import 'package:safeher/services/ble_service.dart';
@@ -326,55 +328,153 @@ class _SOSTriggeredScreenState extends State<SOSTriggeredScreen>
 
                     const SizedBox(height: 20),
 
-                    // Location map preview (if available)
+                    // Interactive map preview (if available)
                     if (hasLocation)
                       GestureDetector(
                         onTap: _openMap,
                         child: Container(
-                          height: 150,
+                          height: 200,
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade200,
                             borderRadius: BorderRadius.circular(
                               AppTheme.radiusLarge,
                             ),
-                            image: DecorationImage(
-                              image: NetworkImage(
-                                // Using OpenStreetMap static tiles (free, no API key required)
-                                'https://staticmap.openstreetmap.de/staticmap.php'
-                                '?center=${widget.log.lat},${widget.log.lng}'
-                                '&zoom=15&size=600x300'
-                                '&markers=${widget.log.lat},${widget.log.lng},red-pushpin',
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
                               ),
-                              fit: BoxFit.cover,
-                              onError: (_, __) {},
-                            ),
+                            ],
                           ),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(
-                                AppTheme.radiusLarge,
-                              ),
-                              gradient: LinearGradient(
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                                colors: [
-                                  Colors.black.withValues(alpha: 0.6),
-                                  Colors.transparent,
-                                ],
-                              ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radiusLarge,
                             ),
-                            alignment: Alignment.bottomLeft,
-                            padding: const EdgeInsets.all(16),
-                            child: const Row(
+                            child: Stack(
                               children: [
-                                Icon(Icons.map_rounded, color: Colors.white),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Tap to open in Maps',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
+                                // Interactive Map
+                                FlutterMap(
+                                  options: MapOptions(
+                                    initialCenter: LatLng(
+                                      widget.log.lat!,
+                                      widget.log.lng!,
+                                    ),
+                                    initialZoom: 15.0,
+                                    interactionOptions:
+                                        const InteractionOptions(
+                                          flags: InteractiveFlag.none,
+                                        ),
+                                  ),
+                                  children: [
+                                    TileLayer(
+                                      urlTemplate:
+                                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                      userAgentPackageName: 'com.safeher.app',
+                                    ),
+                                    MarkerLayer(
+                                      markers: [
+                                        Marker(
+                                          point: LatLng(
+                                            widget.log.lat!,
+                                            widget.log.lng!,
+                                          ),
+                                          width: 50,
+                                          height: 50,
+                                          child: _buildMapMarker(),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                // Gradient overlay at bottom
+                                Positioned(
+                                  bottom: 0,
+                                  left: 0,
+                                  right: 0,
+                                  child: Container(
+                                    height: 60,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.bottomCenter,
+                                        end: Alignment.topCenter,
+                                        colors: [
+                                          Colors.black.withValues(alpha: 0.7),
+                                          Colors.transparent,
+                                        ],
+                                      ),
+                                    ),
+                                    alignment: Alignment.bottomLeft,
+                                    padding: const EdgeInsets.all(16),
+                                    child: const Row(
+                                      children: [
+                                        Icon(
+                                          Icons.open_in_new_rounded,
+                                          color: Colors.white,
+                                          size: 18,
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Tap to open in Maps',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                // SOS badge
+                                Positioned(
+                                  top: 12,
+                                  left: 12,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isCancelled
+                                          ? AppTheme.success
+                                          : AppTheme.error,
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color:
+                                              (isCancelled
+                                                      ? AppTheme.success
+                                                      : AppTheme.error)
+                                                  .withOpacity(0.3),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          isCancelled
+                                              ? Icons.check_circle_rounded
+                                              : Icons.warning_rounded,
+                                          color: Colors.white,
+                                          size: 14,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          isCancelled
+                                              ? 'CANCELLED'
+                                              : 'SOS LOCATION',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ],
@@ -444,6 +544,52 @@ class _SOSTriggeredScreenState extends State<SOSTriggeredScreen>
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildMapMarker() {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Outer pulse ring
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.8, end: 1.2),
+          duration: const Duration(milliseconds: 1000),
+          curve: Curves.easeInOut,
+          builder: (context, value, child) {
+            return Container(
+              width: 50 * value,
+              height: 50 * value,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTheme.error.withOpacity(0.2 * (1.2 - value)),
+              ),
+            );
+          },
+        ),
+        // Inner marker
+        Container(
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            color: AppTheme.error,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 3),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.error.withOpacity(0.4),
+                blurRadius: 8,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.warning_rounded,
+            color: Colors.white,
+            size: 14,
+          ),
+        ),
+      ],
     );
   }
 
