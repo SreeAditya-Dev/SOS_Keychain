@@ -15,7 +15,7 @@
 ## 🎥 App Preview
 
 <div align="center">
-  <video src="webpage/demo%20video.mp4" controls width="80%"></video>
+  <video src="https://res.cloudinary.com/dukjtmdtn/video/upload/v1777288040/demo_video_bwcszu.mp4" controls width="80%"></video>
 </div>
 
 ## 🌟 Overview
