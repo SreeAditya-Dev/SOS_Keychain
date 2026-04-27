@@ -15,7 +15,11 @@
 ## 🎥 App Preview
 
 <div align="center">
-  <video src="https://res.cloudinary.com/dukjtmdtn/video/upload/v1777288040/demo_video_bwcszu.mp4" controls width="80%"></video>
+  <a href="https://res.cloudinary.com/dukjtmdtn/video/upload/v1777288040/demo_video_bwcszu.mp4">
+    <img src="https://res.cloudinary.com/dukjtmdtn/video/upload/v1777288040/demo_video_bwcszu.jpg" alt="SafeHer App Preview" width="80%">
+  </a>
+  <br>
+  <em>Click the image above to watch the demo video.</em>
 </div>
 
 ## 🌟 Overview
