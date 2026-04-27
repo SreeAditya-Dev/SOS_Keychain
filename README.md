@@ -12,6 +12,12 @@
   [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 </div>
 
+## 🎥 App Preview
+
+<div align="center">
+  <video src="webpage/demo%20video.mp4" controls width="80%"></video>
+</div>
+
 ## 🌟 Overview
 
 **SafeHer** is an integrated personal safety ecosystem combining a custom ESP32-based hardware keychain with a cross-platform Flutter application. Designed to provide peace of mind, SafeHer allows users to instantly trigger emergency SOS alerts with a physical button press, immediately notifying emergency contacts with real-time location data.
