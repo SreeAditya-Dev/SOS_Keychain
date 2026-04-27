@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeHer — Your Personal Safety Companion</title>
+    <meta name="description"
+        content="SafeHer is a compact personal safety device designed for women. One press to alert, one press to protect. Just ₹499.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="safeher_logo.png">
+</head>
+
+<body>
+
+    <!-- Loader -->
+    <div id="loader">
+        <div class="loader-content">
+            <div class="loader-logo">
+                <img src="safeher_logo.png" class="loader-asterisk" alt="SafeHer Logo" width="60" height="60">
+            </div>
+            <p class="loader-text">Initializing 3D Experience</p>
+            <div class="loader-bar">
+                <div class="loader-bar-fill" id="loaderBarFill"></div>
+            </div>
+            <p class="loader-percent" id="loaderPercent">0%</p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav id="navbar">
+        <div class="nav-container">
+            <a href="#hero" class="nav-logo split-text">
+                <img src="safeher_logo.png" class="nav-asterisk" alt="SafeHer Logo" width="28" height="28">
+                <span>SafeHer</span>
+            </a>
+            <div class="nav-links" id="navLinks">
+                <a href="#features" class="nav-link split-text">Features</a>
+                <a href="#how-it-works" class="nav-link split-text">How It Works</a>
+                <a href="#inside" class="nav-link split-text">Inside</a>
+                <a href="#specs" class="nav-link split-text">Specs</a>
+                <a href="https://drive.google.com/file/d/1s48PHi6uw6gHPVnEtdOxbiXF_3EXssYd/view?usp=sharing" target="_blank" class="nav-link split-text">Design Thinking</a>
+            </div>
+            <a href="#pricing" class="nav-cta magnetic-btn">
+                <span>Order Now</span>
+            </a>
+            <button class="nav-hamburger" id="navHamburger" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="#features" class="mobile-link">Features</a>
+        <a href="#how-it-works" class="mobile-link">How It Works</a>
+        <a href="#inside" class="mobile-link">Inside</a>
+        <a href="#specs" class="mobile-link">Specs</a>
+        <a href="https://drive.google.com/file/d/1s48PHi6uw6gHPVnEtdOxbiXF_3EXssYd/view?usp=sharing" target="_blank" class="mobile-link">Design Thinking</a>
+        <a href="#pricing" class="mobile-link">Pricing</a>
+        <a href="#pricing" class="mobile-cta">Order Now — ₹499</a>
+    </div>
+
+    <main id="smooth-wrapper">
+        <div id="smooth-content">
+            <!-- Hero Section -->
+            <section id="hero">
+                <div class="hero-bg-glow"></div>
+                <div class="hero-content">
+                    <div class="hero-badge gs-reveal">
+                        <span class="badge-dot"></span>
+                        Personal Safety Reimagined
+                    </div>
+                    <h1 class="hero-title gs-reveal">
+                        One Press.<br>
+                        <span class="hero-title-accent">Infinite Protection.</span>
+                    </h1>
+                    <p class="hero-subtitle gs-reveal">
+                        SafeHer is a compact, intelligent safety device that fits on your keychain.
+                        When danger strikes, one button press sends your location to loved ones and
+                        triggers a 120dB alarm — keeping you safe, always.
+                    </p>
+                    <div class="hero-actions gs-reveal">
+                        <a href="#pricing" class="btn-primary magnetic-btn">
+                            <span>Get SafeHer — ₹499</span>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7" />
+                            </svg>
+                        </a>
+                        <a href="#how-it-works" class="btn-secondary">See How It Works</a>
+                    </div>
+                    <div class="hero-trust gs-reveal">
+                        <div class="trust-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                    d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5zm-1 15l-4-4 1.41-1.41L11 14.17l6.59-6.59L19 9l-8 8z" />
+                            </svg>
+                            <span>120dB Alarm</span>
+                        </div>
+                        <div class="trust-divider"></div>
+                        <div class="trust-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                    d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                            </svg>
+                            <span>GPS Tracking</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-scroll-hint">
+                    <span>Scroll to explore</span>
+                    <div class="scroll-arrow">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M12 5v14M5 12l7 7 7-7" />
+                        </svg>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3D Product Showcase (GSAP ScrollTrigger Animation) -->
+            <section id="product-3d">
+                <div class="product-3d-sticky">
+                    <canvas id="productCanvas"></canvas>
+                    <div class="product-3d-overlay" id="product3dOverlay">
+                        <div class="overlay-text overlay-text-1">
+                            <h2 class="gs-split">Compact Design</h2>
+                            <p class="gs-split">Fits on any keychain — always within reach</p>
+                        </div>
+                        <div class="overlay-text overlay-text-2">
+                            <h2 class="gs-split">Built to Protect</h2>
+                            <p class="gs-split">Two tactile buttons for instant emergency activation</p>
+                        </div>
+                        <div class="overlay-text overlay-text-3">
+                            <h2 class="gs-split">Precision Engineered</h2>
+                            <p class="gs-split">Every component designed for reliability when it matters most</p>
+                        </div>
+                        <div class="overlay-text overlay-text-4">
+                            <h2 class="gs-split">Inside SafeHer</h2>
+                            <p class="gs-split">Advanced PCB with GPS, speaker, and long-lasting battery</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Features Section -->
+            <section id="features">
+                <div class="container">
+                    <div class="section-header gs-reveal-up">
+                        <span class="section-tag">Why SafeHer</span>
+                        <h2 class="section-title gs-split">Safety That Travels<br><span class="title-accent">With
+                                You</span></h2>
+                        <p class="section-desc">Every feature is designed with one goal — keeping you safe in any
+                            situation.</p>
+                    </div>
+                    <div class="features-grid">
+                        <div class="feature-card gs-stagger">
+                            <div class="feature-icon">
+                                <svg viewBox="0 0 48 48" fill="none">
+                                    <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="2"
+                                        opacity="0.2" />
+                                    <path d="M24 14v10l6 4" stroke="currentColor" stroke-width="2.5"
+                                        stroke-linecap="round" />
+                                    <path d="M8 18c-1-2-1.5-4-1.5-6" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" opacity="0.5" />
+                                    <path d="M40 18c1-2 1.5-4 1.5-6" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" opacity="0.5" />
+                                    <circle cx="24" cy="24" r="3" fill="currentColor" />
+                                </svg>
+                            </div>
+                            <h3>120dB Alarm</h3>
+                            <p>A piercing alarm that can be heard across city blocks. Draws immediate attention and
+                                deters threats instantly.</p>
+                        </div>
+                        <div class="feature-card feature-card-large gs-stagger">
+                            <div class="feature-icon">
+                                <svg viewBox="0 0 48 48" fill="none">
+                                    <path
+                                        d="M24 4C16.27 4 10 10.27 10 18c0 10.5 14 26 14 26s14-15.5 14-26c0-7.73-6.27-14-14-14z"
+                                        stroke="currentColor" stroke-width="2" />
+                                    <circle cx="24" cy="18" r="5" stroke="currentColor" stroke-width="2" />
+                                    <circle cx="24" cy="18" r="2" fill="currentColor" />
+                                </svg>
+                            </div>
+                            <h3>Live GPS Location</h3>
+                            <p>Shares your real-time GPS coordinates with up to 5 emergency contacts. They see exactly
+                                where you are, when you need them most.</p>
+                        </div>
+                        <div class="feature-card gs-stagger">
+                            <div class="feature-icon">
+                                <svg viewBox="0 0 48 48" fill="none">
+                                    <rect x="8" y="12" width="32" height="24" rx="4" stroke="currentColor"
+                                        stroke-width="2" />
+                                    <path d="M8 18l16 10 16-10" stroke="currentColor" stroke-width="2" />
+                                </svg>
+                            </div>
+                            <h3>SOS Messages</h3>
+                            <p>Automatically sends distress messages with your location to pre-saved emergency contacts
+                                via SMS and app notification.</p>
+                        </div>
+                        <div class="feature-card gs-stagger">
+                            <div class="feature-icon">
+                                <svg viewBox="0 0 48 48" fill="none">
+                                    <rect x="14" y="14" width="20" height="20" rx="4" stroke="currentColor"
+                                        stroke-width="2" />
+                                    <path d="M14 24h20M24 14v20" stroke="currentColor" stroke-width="1.5"
+                                        opacity="0.3" />
+                                    <circle cx="8" cy="8" r="2" fill="currentColor" opacity="0.5" />
+                                    <circle cx="40" cy="8" r="2" fill="currentColor" opacity="0.5" />
+                                    <circle cx="8" cy="40" r="2" fill="currentColor" opacity="0.5" />
+                                    <circle cx="40" cy="40" r="2" fill="currentColor" opacity="0.5" />
+                                    <path d="M8 8L14 14M40 8L34 14M8 40L14 34M40 40L34 34" stroke="currentColor"
+                                        stroke-width="1" opacity="0.3" />
+                                </svg>
+                            </div>
+                            <h3>Ultra Compact</h3>
+                            <p>Smaller than a matchbox. Attach it to your keys, bag, or wear it as an accessory — safety
+                                that doesn't compromise style.</p>
+                        </div>
+                        <div class="feature-card gs-stagger">
+                            <div class="feature-icon">
+                                <svg viewBox="0 0 48 48" fill="none">
+                                    <rect x="8" y="16" width="28" height="16" rx="3" stroke="currentColor"
+                                        stroke-width="2" />
+                                    <path d="M36 22v4h4v-4h-4z" fill="currentColor" opacity="0.5" />
+                                    <rect x="12" y="20" width="8" height="8" rx="1" fill="currentColor" opacity="0.4" />
+                                    <rect x="22" y="20" width="8" height="8" rx="1" fill="currentColor" opacity="0.2" />
+                                </svg>
+                            </div>
+                            <h3>Long Battery Life</h3>
+                            <p>Coin-cell battery lasts up to 6 months on standby. Replaceable in seconds — no charging
+                                cables needed.</p>
+                        </div>
+                        <div class="feature-card feature-card-large gs-stagger">
+                            <div class="feature-icon">
+                                <svg viewBox="0 0 48 48" fill="none">
+                                    <rect x="14" y="6" width="20" height="36" rx="4" stroke="currentColor"
+                                        stroke-width="2" />
+                                    <circle cx="24" cy="36" r="2" fill="currentColor" />
+                                    <path d="M18 12h12M18 16h8" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" opacity="0.5" />
+                                    <circle cx="24" cy="25" r="5" stroke="currentColor" stroke-width="1.5" />
+                                    <path d="M24 22v3l2 1" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" />
+                                </svg>
+                            </div>
+                            <h3>SafeHer App</h3>
+                            <p>Manage contacts, track history, configure alerts, and customize your device — all from
+                                the companion mobile app. Available on Android and iOS.</p>
+                        </div>
+                        <div class="feature-card gs-stagger">
+                            <div class="feature-icon">
+                                <svg viewBox="0 0 48 48" fill="none">
+                                    <path d="M24 5l15 6v10c0 10-6.5 17.5-15 22-8.5-4.5-15-12-15-22V11l15-6z"
+                                        stroke="currentColor" stroke-width="2" />
+                                    <path d="M24 16v9" stroke="currentColor" stroke-width="2.5"
+                                        stroke-linecap="round" />
+                                    <circle cx="24" cy="30" r="2.5" fill="currentColor" />
+                                </svg>
+                            </div>
+                            <h3>Tamper Alert System</h3>
+                            <p>If someone tries to force-open or remove the device, SafeHer can trigger a warning
+                                pattern and immediately notify your emergency contacts.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- How It Works -->
+            <section id="how-it-works">
+                <div class="container">
+                    <div class="section-header gs-reveal-up">
+                        <span class="section-tag">Simple & Fast</span>
+                        <h2 class="section-title gs-split">How It <span class="title-accent">Works</span></h2>
+                        <p class="section-desc">Three seconds is all it takes to activate SafeHer and get help on the
+                            way.</p>
+                    </div>
+                    <div class="steps-container">
+                        <div class="step-card" id="step-1">
+                            <div class="step-number">01</div>
+                            <div class="step-content">
+                                <h3>Press the Button</h3>
+                                <p>A single press on either of the two tactile buttons activates SafeHer instantly —
+                                    even through fabric.</p>
+                            </div>
+                            <div class="step-visual">
+                                <div class="step-pulse"></div>
+                                <svg viewBox="0 0 80 80" fill="none" width="80" height="80">
+                                    <circle cx="40" cy="40" r="25" stroke="currentColor" stroke-width="2" />
+                                    <circle cx="40" cy="40" r="15" fill="currentColor" opacity="0.3" />
+                                    <circle cx="40" cy="40" r="8" fill="currentColor" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="step-connector">
+                            <div class="connector-line"></div>
+                            <div class="connector-dot"></div>
+                        </div>
+                        <div class="step-card" id="step-2">
+                            <div class="step-number">02</div>
+                            <div class="step-content">
+                                <h3>Alarm Goes Off</h3>
+                                <p>A 120dB alarm cuts through noise, drawing attention and startling any potential
+                                    threat in the vicinity.</p>
+                            </div>
+                            <div class="step-visual">
+                                <div class="step-wave"></div>
+                                <svg viewBox="0 0 80 80" fill="none" width="80" height="80">
+                                    <path d="M30 50V30l20-8v36l-20-8z" fill="currentColor" opacity="0.3" />
+                                    <path d="M55 28c4 4 6 8 6 12s-2 8-6 12" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" />
+                                    <path d="M60 22c6 6 9 12 9 18s-3 12-9 18" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" opacity="0.5" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="step-connector">
+                            <div class="connector-line"></div>
+                            <div class="connector-dot"></div>
+                        </div>
+                        <div class="step-card" id="step-3">
+                            <div class="step-number">03</div>
+                            <div class="step-content">
+                                <h3>Help Is Notified</h3>
+                                <p>Your GPS location is instantly shared with emergency contacts via SMS and the SafeHer
+                                    app. Help is on the way.</p>
+                            </div>
+                            <div class="step-visual">
+                                <svg viewBox="0 0 80 80" fill="none" width="80" height="80">
+                                    <circle cx="40" cy="35" r="18" stroke="currentColor" stroke-width="2" />
+                                    <circle cx="40" cy="35" r="6" fill="currentColor" opacity="0.5" />
+                                    <circle cx="40" cy="35" r="2" fill="currentColor" />
+                                    <path d="M40 53v12" stroke="currentColor" stroke-width="2" />
+                                    <path d="M34 65h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Demo Video Section -->
+            <section id="demo-video">
+                <div class="container">
+                    <div class="demo-shell gs-reveal">
+                        <div class="demo-copy gs-reveal-up">
+                            <span class="section-tag">Live Demo</span>
+                            <h2 class="section-title">See SafeHer In <span class="title-accent">Real Action</span></h2>
+                            <p class="section-desc">Watch a quick walkthrough of how one tap triggers alarm, location
+                                sharing, and faster emergency response flow.</p>
+                        </div>
+                        <div class="demo-player-wrap gs-reveal-up">
+                            <video class="demo-player" controls preload="metadata" playsinline muted>
+                                <source src="demo video.mp4" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Inside the Device -->
+            <section id="inside">
+                <div class="container">
+                    <div class="section-header gs-reveal-up">
+                        <span class="section-tag">Engineering</span>
+                        <h2 class="section-title gs-split">What's Inside<br><span class="title-accent">SafeHer</span>
+                        </h2>
+                        <p class="section-desc">Every component is hand-picked for maximum reliability in critical
+                            moments.</p>
+                    </div>
+                    <div class="inside-showcase">
+                        <div class="inside-image gs-reveal-left">
+                            <img src="frames/ezgif-frame-035.jpg" alt="SafeHer internal components" loading="lazy">
+                            <div class="inside-hotspot hotspot-1" data-label="120dB Piezo Speaker">
+                                <div class="hotspot-ping"></div>
+                                <div class="hotspot-dot"></div>
+                            </div>
+                            <div class="inside-hotspot hotspot-2" data-label="Tactile Buttons">
+                                <div class="hotspot-ping"></div>
+                                <div class="hotspot-dot"></div>
+                            </div>
+                            <div class="inside-hotspot hotspot-3" data-label="CR2032 Battery">
+                                <div class="hotspot-ping"></div>
+                                <div class="hotspot-dot"></div>
+                            </div>
+                            <div class="inside-hotspot hotspot-4" data-label="GPS Module">
+                                <div class="hotspot-ping"></div>
+                                <div class="hotspot-dot"></div>
+                            </div>
+                        </div>
+                        <div class="inside-details">
+                            <div class="inside-detail-card gs-stagger-detail" id="detail-speaker">
+                                <div class="detail-icon">
+                                    <svg viewBox="0 0 32 32" fill="none" width="32" height="32">
+                                        <path d="M10 20V12l10-4v16l-10-4z" fill="currentColor" opacity="0.3" />
+                                        <path d="M23 11c2 2 3 4 3 5s-1 3-3 5" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4>Piezo Speaker</h4>
+                                    <p>120dB output — louder than a jet engine at close range</p>
+                                </div>
+                            </div>
+                            <div class="inside-detail-card gs-stagger-detail" id="detail-buttons">
+                                <div class="detail-icon">
+                                    <svg viewBox="0 0 32 32" fill="none" width="32" height="32">
+                                        <rect x="8" y="10" width="16" height="12" rx="3" stroke="currentColor"
+                                            stroke-width="2" />
+                                        <circle cx="16" cy="16" r="3" fill="currentColor" opacity="0.4" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4>Dual Tactile Buttons</h4>
+                                    <p>Rated for 100,000+ presses with satisfying click feedback</p>
+                                </div>
+                            </div>
+                            <div class="inside-detail-card gs-stagger-detail" id="detail-battery">
+                                <div class="detail-icon">
+                                    <svg viewBox="0 0 32 32" fill="none" width="32" height="32">
+                                        <circle cx="16" cy="16" r="10" stroke="currentColor" stroke-width="2" />
+                                        <path d="M14 12v4h4v-4M14 20v-4h4v4" stroke="currentColor" stroke-width="1.5" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4>CR2032 Coin Cell</h4>
+                                    <p>6-month standby life, replaceable in seconds</p>
+                                </div>
+                            </div>
+                            <div class="inside-detail-card gs-stagger-detail" id="detail-pcb">
+                                <div class="detail-icon">
+                                    <svg viewBox="0 0 32 32" fill="none" width="32" height="32">
+                                        <rect x="6" y="6" width="20" height="20" rx="2" stroke="currentColor"
+                                            stroke-width="2" />
+                                        <rect x="12" y="12" width="8" height="8" rx="1" fill="currentColor"
+                                            opacity="0.3" />
+                                        <path d="M6 16h6M20 16h6M16 6v6M16 20v6" stroke="currentColor"
+                                            stroke-width="1.5" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4>Custom PCB</h4>
+                                    <p>Integrated GPS, Bluetooth LE, and alert controller</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Specs Section -->
+            <section id="specs">
+                <div class="container">
+                    <div class="section-header gs-reveal-up">
+                        <span class="section-tag">Technical</span>
+                        <h2 class="section-title gs-split">Device <span class="title-accent">Specifications</span></h2>
+                    </div>
+                    <div class="specs-grid">
+                        <div class="spec-card gs-stagger-spec">
+                            <div class="spec-value counter" data-target="45">0</div>
+                            <div class="spec-unit">mm</div>
+                            <div class="spec-label">Dimensions</div>
+                        </div>
+                        <div class="spec-card gs-stagger-spec">
+                            <div class="spec-value counter" data-target="28">0</div>
+                            <div class="spec-unit">grams</div>
+                            <div class="spec-label">Weight</div>
+                        </div>
+                        <div class="spec-card gs-stagger-spec">
+                            <div class="spec-value counter" data-target="120">0</div>
+                            <div class="spec-unit">dB</div>
+                            <div class="spec-label">Alarm Volume</div>
+                        </div>
+                        <div class="spec-card gs-stagger-spec">
+                            <div class="spec-value counter" data-target="6">0</div>
+                            <div class="spec-unit">months</div>
+                            <div class="spec-label">Battery Life</div>
+                        </div>
+                        <div class="spec-card gs-stagger-spec">
+                            <div class="spec-value counter" data-target="5">0</div>
+                            <div class="spec-unit">contacts</div>
+                            <div class="spec-label">Emergency Contacts</div>
+                        </div>
+                        <div class="spec-card gs-stagger-spec">
+                            <div class="spec-value">BLE</div>
+                            <div class="spec-unit">5.0</div>
+                            <div class="spec-label">Connectivity</div>
+                        </div>
+                        <div class="spec-card gs-stagger-spec">
+                            <div class="spec-value">IP54</div>
+                            <div class="spec-unit">rated</div>
+                            <div class="spec-label">Water Resistance</div>
+                        </div>
+                        <div class="spec-card gs-stagger-spec">
+                            <div class="spec-value">ABS</div>
+                            <div class="spec-unit">polymer</div>
+                            <div class="spec-label">Shell Material</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Business Impact Section -->
+            <section id="business-impact">
+                <div class="container">
+                    <div class="section-header gs-reveal-up">
+                        <span class="section-tag">B2B Solutions</span>
+                        <h2 class="section-title gs-split">Corporate Responsibility<br><span class="title-accent">& Duty
+                                of Care</span></h2>
+                        <p class="section-desc">Protect your most valuable assets. SafeHer offers enterprise solutions
+                            designed for campuses, corporate teams, and night-shift employees.</p>
+                    </div>
+                    <div class="impact-grid">
+                        <div class="impact-card gs-stagger">
+                            <div class="impact-icon">
+                                <svg viewBox="0 0 48 48" fill="none">
+                                    <path d="M24 4V44M4 24H44" stroke="currentColor" stroke-width="2" opacity="0.3" />
+                                    <path d="M12 24L24 12L36 24L24 36L12 24Z" stroke="currentColor" stroke-width="2" />
+                                    <circle cx="24" cy="24" r="4" fill="currentColor" />
+                                </svg>
+                            </div>
+                            <h3>Enterprise Dashboard</h3>
+                            <p>Manage hundreds of devices from a single portal. Instantly assign devices to employees
+                                and monitor battery health across the enterprise.</p>
+                        </div>
+                        <div class="impact-card gs-stagger">
+                            <div class="impact-icon">
+                                <svg viewBox="0 0 48 48" fill="none">
+                                    <rect x="8" y="14" width="32" height="24" rx="4" stroke="currentColor"
+                                        stroke-width="2" />
+                                    <path d="M8 20H40" stroke="currentColor" stroke-width="2" />
+                                    <path d="M16 28H24" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                                </svg>
+                            </div>
+                            <h3>Liability Reduction</h3>
+                            <p>Proactively equip your workforce with industry-leading safety tech, significantly
+                                reducing corporate liability and building an immense culture of trust.</p>
+                        </div>
+                        <div class="impact-card gs-stagger">
+                            <div class="impact-icon">
+                                <svg viewBox="0 0 48 48" fill="none">
+                                    <path d="M18 36L24 12L30 36" stroke="currentColor" stroke-width="2" />
+                                    <path d="M21 28H27" stroke="currentColor" stroke-width="2" />
+                                    <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="2"
+                                        opacity="0.3" />
+                                </svg>
+                            </div>
+                            <h3>Campus Security Sync</h3>
+                            <p>For universities, SafeHer can be hardwired to instantly alert campus security dispatch
+                                boards simultaneously with personal contacts.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Market Analysis Section -->
+            <section id="market-analysis">
+                <div class="container">
+                    <div class="market-wrapper gs-reveal">
+                        <div class="market-content">
+                            <span class="section-tag">Product Comparison</span>
+                            <h2 class="market-title">Current Product vs<br><span class="title-accent">Our Product
+                                    (SafeHer)</span></h2>
+                            <p class="market-desc">A direct comparison against generic app-only safety solutions used
+                                today. SafeHer is built to reduce delay and improve emergency response under stress.</p>
+                        </div>
+                        <div class="comparison-grid">
+                            <article class="comparison-card gs-reveal-up">
+                                <h3 class="comparison-heading">Current Product</h3>
+                                <ul class="comparison-list">
+                                    <li class="comparison-row">
+                                        <span class="comparison-label">Activation Speed</span>
+                                        <span class="comparison-value">Unlock phone, open app, tap SOS</span>
+                                    </li>
+                                    <li class="comparison-row">
+                                        <span class="comparison-label">Internet Dependency</span>
+                                        <span class="comparison-value">High dependency for full alert flow</span>
+                                    </li>
+                                    <li class="comparison-row">
+                                        <span class="comparison-label">Hardware Alarm Loudness</span>
+                                        <span class="comparison-value">No dedicated on-device alarm</span>
+                                    </li>
+                                    <li class="comparison-row">
+                                        <span class="comparison-label">Real-Time Location Sharing</span>
+                                        <span class="comparison-value">Depends on app state and permissions</span>
+                                    </li>
+                                    <li class="comparison-row">
+                                        <span class="comparison-label">Ease Under Stress</span>
+                                        <span class="comparison-value">Multiple screen actions required</span>
+                                    </li>
+                                    <li class="comparison-row">
+                                        <span class="comparison-label">Emergency Alert Reliability</span>
+                                        <span class="comparison-value">Can be delayed if app is closed</span>
+                                    </li>
+                                </ul>
+                            </article>
+                            <article class="comparison-card comparison-card-highlight gs-reveal-up">
+                                <h3 class="comparison-heading">Our Product (SafeHer)</h3>
+                                <ul class="comparison-list">
+                                    <li class="comparison-row">
+                                        <span class="comparison-label">Activation Speed</span>
+                                        <span class="comparison-value">Single physical button press</span>
+                                    </li>
+                                    <li class="comparison-row">
+                                        <span class="comparison-label">Internet Dependency</span>
+                                        <span class="comparison-value">Offline 120dB alarm, app sync when
+                                            available</span>
+                                    </li>
+                                    <li class="comparison-row">
+                                        <span class="comparison-label">Hardware Alarm Loudness</span>
+                                        <span class="comparison-value">Dedicated 120dB on-device alarm</span>
+                                    </li>
+                                    <li class="comparison-row">
+                                        <span class="comparison-label">Real-Time Location Sharing</span>
+                                        <span class="comparison-value">Live coordinates to emergency contacts</span>
+                                    </li>
+                                    <li class="comparison-row">
+                                        <span class="comparison-label">Ease Under Stress</span>
+                                        <span class="comparison-value">Tactile trigger designed for panic moments</span>
+                                    </li>
+                                    <li class="comparison-row">
+                                        <span class="comparison-label">Emergency Alert Reliability</span>
+                                        <span class="comparison-value">Dedicated safety-first activation workflow</span>
+                                    </li>
+                                </ul>
+                            </article>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pricing Section -->
+            <section id="pricing">
+                <div class="container">
+                    <div class="section-header gs-reveal-up">
+                        <span class="section-tag">Get Yours</span>
+                        <h2 class="section-title gs-split">Safety Shouldn't<br><span class="title-accent">Be
+                                Expensive</span></h2>
+                        <p class="section-desc">One device. One price. Everything included.</p>
+                    </div>
+                    <div class="pricing-card gs-reveal" id="pricing-main">
+                        <div class="pricing-glow"></div>
+                        <div class="pricing-badge">Most Popular</div>
+                        <div class="pricing-header">
+                            <h3>SafeHer Device</h3>
+                            <div class="pricing-amount">
+                                <span class="pricing-currency">₹</span>
+                                <span class="pricing-value" id="pricingval">499</span>
+                            </div>
+                            <p class="pricing-period">one-time purchase</p>
+                        </div>
+                        <ul class="pricing-features">
+                            <li><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                                </svg>SafeHer Device with Keychain</li>
+                            <li><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                                </svg>120dB Personal Alarm</li>
+                            <li><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                                </svg>GPS Location Sharing</li>
+                            <li><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                                </svg>SafeHer Companion App (Free)</li>
+                            <li><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                                </svg>5 Emergency Contact Slots</li>
+                            <li><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                                </svg>CR2032 Battery Included</li>
+                            <li><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                                </svg>1 Year Warranty</li>
+                            <li><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                                </svg>Free Shipping Pan-India</li>
+                        </ul>
+                        <a href="#" class="pricing-cta magnetic-btn" id="orderBtn">
+                            <span>Order Now</span>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7" />
+                            </svg>
+                        </a>
+                        <p class="pricing-guarantee">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                    d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5zm-1 15l-4-4 1.41-1.41L11 14.17l6.59-6.59L19 9l-8 8z" />
+                            </svg>
+                            30-day money-back guarantee
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FAQ Section -->
+            <section id="faq">
+                <div class="container">
+                    <div class="section-header gs-reveal-up">
+                        <span class="section-tag">Questions</span>
+                        <h2 class="section-title gs-split">Frequently <span class="title-accent">Asked</span></h2>
+                    </div>
+                    <div class="faq-list">
+                        <div class="faq-item gs-stagger">
+                            <button class="faq-question" aria-expanded="false">
+                                <span>How loud is the SafeHer alarm?</span>
+                                <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <path d="M12 5v14M5 12h14" />
+                                </svg>
+                            </button>
+                            <div class="faq-answer">
+                                <p>The SafeHer alarm produces 120dB of sound — that's louder than a chainsaw and can be
+                                    heard from over 300 meters away. It's designed to immediately draw attention and
+                                    deter any threat.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item gs-stagger">
+                            <button class="faq-question" aria-expanded="false">
+                                <span>How does GPS sharing work?</span>
+                                <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <path d="M12 5v14M5 12h14" />
+                                </svg>
+                            </button>
+                            <div class="faq-answer">
+                                <p>SafeHer connects to your smartphone via Bluetooth LE. When activated, the companion
+                                    app uses your phone's GPS to send your exact coordinates to up to 5 emergency
+                                    contacts via SMS and push notifications.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item gs-stagger">
+                            <button class="faq-question" aria-expanded="false">
+                                <span>Is it waterproof?</span>
+                                <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <path d="M12 5v14M5 12h14" />
+                                </svg>
+                            </button>
+                            <div class="faq-answer">
+                                <p>SafeHer is rated IP54, which means it's protected against dust and water splashes. It
+                                    can handle rain and accidental spills, but should not be submerged in water.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item gs-stagger">
+                            <button class="faq-question" aria-expanded="false">
+                                <span>How do I replace the battery?</span>
+                                <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <path d="M12 5v14M5 12h14" />
+                                </svg>
+                            </button>
+                            <div class="faq-answer">
+                                <p>Simply open the back panel, pop out the old CR2032 coin cell, and insert a new one.
+                                    No tools needed. CR2032 batteries are available at any electronics or convenience
+                                    store.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item gs-stagger">
+                            <button class="faq-question" aria-expanded="false">
+                                <span>Does it work without a phone?</span>
+                                <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <path d="M12 5v14M5 12h14" />
+                                </svg>
+                            </button>
+                            <div class="faq-answer">
+                                <p>The 120dB alarm works independently without a phone connection. However, GPS sharing
+                                    and SOS messaging require a Bluetooth connection to your smartphone with the SafeHer
+                                    app installed.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Feedback QR Section -->
+            <section id="feedback-qr">
+                <div class="container">
+                    <div class="feedback-card gs-reveal">
+                        <div class="feedback-copy gs-reveal-up">
+                            <span class="section-tag">Your Voice Matters</span>
+                            <h2 class="section-title">Share Quick <span class="title-accent">Feedback</span></h2>
+                            <p class="section-desc">Scan the QR and tell us what you loved, what can be better, and
+                                which features you want next. Your input helps us ship safer updates faster.</p>
+                        </div>
+                        <div class="feedback-qr-wrap gs-reveal-up">
+                            <img src="qrcode.png" alt="Scan this QR code to submit SafeHer feedback"
+                                class="feedback-qr-img" loading="lazy">
+                            <p class="feedback-qr-note">Scan this code to submit feedback in under 60 seconds.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <footer id="footer">
+                <div class="container">
+                    <div class="footer-top">
+                        <div class="footer-brand gs-reveal">
+                            <div class="footer-logo">
+                                <img src="safeher_logo.png" class="footer-asterisk" alt="SafeHer Logo" width="32"
+                                    height="32">
+                                <span>SafeHer</span>
+                            </div>
+                            <p class="footer-tagline">Safety that travels with you. Designed for women, built for peace
+                                of mind.</p>
+                        </div>
+                        <div class="footer-links-grid">
+                            <div class="footer-col gs-stagger">
+                                <h4>Product</h4>
+                                <a href="#features">Features</a>
+                                <a href="#specs">Specifications</a>
+                                <a href="https://drive.google.com/file/d/1s48PHi6uw6gHPVnEtdOxbiXF_3EXssYd/view?usp=sharing" target="_blank">Design Thinking</a>
+                                <a href="#pricing">Pricing</a>
+                                <a href="#faq">FAQ</a>
+                            </div>
+                            <div class="footer-col gs-stagger">
+                                <h4>Company</h4>
+                                <a href="#">About Us</a>
+                                <a href="#">Our Mission</a>
+                                <a href="#">Press Kit</a>
+                                <a href="#">Careers</a>
+                            </div>
+                            <div class="footer-col gs-stagger">
+                                <h4>Support</h4>
+                                <a href="#">Contact Us</a>
+                                <a href="#">Shipping Info</a>
+                                <a href="#">Returns</a>
+                                <a href="#">Warranty</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="footer-bottom">
+                        <p>© 2026 SafeHer. All rights reserved.</p>
+                        <div class="footer-legal">
+                            <a href="#">Privacy Policy</a>
+                            <a href="#">Terms of Service</a>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </main>
+
+    <!-- Libs: GSAP, ScrollTrigger, Lenis -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js"></script>
+
+    <!-- Custom Script -->
+    <script src="script.js"></script>
+</body>
+
+</html>
